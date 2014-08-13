@@ -400,6 +400,7 @@ class CL_Tracer():
 		plt.title("Elevation Histogram")
 		plt.xlabel("Elevation")
 		plt.ylabel("Power")
+		pylab.savefig("./elevation_power_distribution.pdf")
 		plt.show()
 
 	def get_binned_data_stereographic(self,limits=((-1,1),(-1,1)),points=500): #project data stereographically onto xy plane and bin it
@@ -551,10 +552,12 @@ class CL_Tracer():
         		ax.zaxis.set_major_locator(LinearLocator(10))
 			ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
         		fig.colorbar(surf, shrink=0.5, aspect=5)
+        		pylab.savefig("./binned_3D_data_replicated_sources.pdf")
 			plt.show()
 		else: #if you really want 2D, have it!
 			pylab.imshow(np.log10(H),extent=extent,interpolation='nearest',origin='lower')
 			pylab.colorbar()
+			pylab.savefig("./binned_2D_data_replicated_sources.pdf")
 			pylab.show()
 		
 		
@@ -601,10 +604,12 @@ class CL_Tracer():
         		ax.zaxis.set_major_locator(LinearLocator(10))
 			ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
         		fig.colorbar(surf, shrink=0.5, aspect=5)
+        		pylab.savefig("./binned_3D_data.pdf")
 			plt.show()
 		else:
 			pylab.imshow(np.log10(H),extent=extent,interpolation='nearest',origin='lower')
 			pylab.colorbar()
+			pylab.savefig("./binned_2D_data.pdf")
 			pylab.show()
 		
 	def pickle_results(self):
