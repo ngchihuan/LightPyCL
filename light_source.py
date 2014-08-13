@@ -49,7 +49,7 @@ class light_source():
 		self.ray_count   = np.floor(np.sqrt(self.ray_count))**2
 		print "Setting up rays in regular grid"
 		print "Setting ray count to next square ray_count = ", self.ray_count
-		#direction determains the main pointing direction of the beam => phi0 and thita0
+		#direction determines the main pointing direction of the beam => phi0 and thita0
 		#use phi and thita for rotation matricies along x and z axis
 		#first x for thita and then z for phi
 		elevation0 = np.arccos(self.direction[2]/la.norm(self.direction))
@@ -130,12 +130,12 @@ class light_source():
 		rd = np.concatenate((xr,yr,zr,ar),axis=1)
 		
 		self.rays_dir = rd
-		self.rays_power = np.float32(self.directivity(azimuth,elevation)) * self.power
+		self.rays_power = np.float32(self.directivity(azimuth,elevation)) 
+		self.rays_power = self.rays_power * self.power/np.sum(self.rays_power)
 		  
 		self.rays_dir = np.dot(self.rays_dir,Rx(elevation0))
 		self.rays_dir = np.dot(self.rays_dir,Rz(azimuth0)).astype(np.float32)
 
-		#print np.linalg.norm(self.rays_dir,axis=1)
 		
 	def rotate_rays(self,axis="z",pivot=[0,0,0,0],ang=np.pi/2.0):
 		Rx = lambda x: np.matrix([[1,0,0,0],[0,np.cos(x),-np.sin(x),0],[0,np.sin(x),np.cos(x),0],[0,0,0,0]])

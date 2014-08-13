@@ -97,6 +97,12 @@ for res in resulting_rays:
 # fetch measured rays termination position and powers
 measured_rays = tr.get_measured_rays()
 
+source_power   = np.sum(ls0.rays_power)
+measured_power = np.sum(measured_rays[1])
+
+print "Lightsource Power: ", source_power
+print "Measured power:    ",measured_power
+
 # plot the data
 #extent of measurement surface. ((xmin,xmax),(ymin,ymax))
 #setting to +-pi/2 for hemisphere
