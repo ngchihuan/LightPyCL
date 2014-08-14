@@ -161,13 +161,13 @@ you can show an aggregated elevation plot that assumes rotational symmetry aroun
 
 ## Performance
 
-The performance of the raytracer is determined by measuring the time __T__ a combined itersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. __N__ * __M__ gives the amount of performed refractive intersections or put differently the amount of rays that could be refracted if the scene consisted of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s".
+The performance of the raytracer is determined by measuring the time __T__ a combined intersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. Because every ray has to search all triangles in a scene for a valid closest intersection, __N__ * __M__ gives the amount of performed refractive intersections or put differently the amount of rays that could be intersected and refracted if the scene consisted of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s" or "RI/s".
 
 Here are some results from various platforms:
 <table>
-	<tr><td>Intel i5</td>		<td>~ 0.5e9 refractive intersections/s</td></tr>
-	<tr><td>nVidia GTX460</td>	<td>~ 4.1e9 refractive intersections/s</td></tr>
-	<tr><td>nVidia GTX770</td>	<td>~ 9.9e9 refractive intersections/s</td></tr>
+	<tr><td>Intel i5</td>		<td>~ 0.5e9 RI/s</td></tr>
+	<tr><td>nVidia GTX460</td>	<td>~ 4.1e9 RI/s</td></tr>
+	<tr><td>nVidia GTX770</td>	<td>~ 9.9e9 RI/s</td></tr>
 </table>
 
 Performance results are printed in the console during simulation, so if you would like to share those results, drop me a line.

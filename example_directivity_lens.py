@@ -102,6 +102,6 @@ if ray_count < 10000:
 	tr.save_traced_scene("./results.dxf")
 
 # Show overall stats
-print "Processed",proc_ray_count, "rays in ", sim_time, "s"
-print "Measured", len(measured_rays[1]), "rays."
-print "Performed", proc_ray_count*np.int64(tr.tri_count)/np.float64(sim_time), "refractive iterations/s"
+print "Processed 	    ",proc_ray_count, "rays in ", sim_time, "s"
+print "Measured  	    ", len(measured_rays[1]), "rays."
+print "On average performed ", proc_ray_count*np.int64(tr.tri_count)/np.float64(sim_time), "RI/s"
