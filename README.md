@@ -161,7 +161,7 @@ you can show an aggregated elevation plot that assumes rotational symmetry aroun
 
 ## Performance
 
-The performance of the raytracer is determined by measuring the time __T__ a combined itersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. __N__ * __M__ gives the amount of performed refractive intersections or put differently the amount of rays could be refracted if the scene was made of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s".
+The performance of the raytracer is determined by measuring the time __T__ a combined itersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. __N__ * __M__ gives the amount of performed refractive intersections or put differently the amount of rays that could be refracted if the scene consisted of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s".
 
 Here are some results from various platforms:
 <table>
