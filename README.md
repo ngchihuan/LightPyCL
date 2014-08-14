@@ -45,11 +45,11 @@ Some examples are included in the repo to help you get started.
 
 To create a light source you will need to import the light_source class
 
-'import light_source'
+`import light_source`
 
 and create a light source
 
-'''
+```
 ray_count = 10000
 directivity = lambda azimuth,elevation: np.cos(elevation)
 
@@ -57,7 +57,7 @@ lightsource0 = light_source.light_source(center=[-1,0,0,0], direction=[1,0,1], d
 lightsource1 = light_source.light_source(center=[1,0,0,0], direction=[-1,0,1], directivity=directivity, power=2.0, ray_count=ray_count)
 
 lightsources = [lightsource0, lightsource1]
-'''
+```
 
 ray_count defines the amount of rays the light source is to emit and directivity is the directional power distribution function of the light source. Note that elevation is measured away from the direction the light source is pointing in.
 
@@ -65,34 +65,34 @@ The first light source origin is placed on the left hand side of the scene (x=-1
 
 The first source is pointing to the upper right [1,0,1] and the second source is pointing up left [-1,0,1] with a respective power of 1.0 and 2.0 and the same amount of rays.
 
-Finally, all the light sources are added to the list 'lightsources' with can be handed to the raytracer.
+Finally, all the light sources are added to the list `lightsources` with can be handed to the raytracer.
 
 ### Optical elements and scene objects
 
-To generate optical elements the an instance of 'geo_optical_elements' is required
+To generate optical elements the an instance of `geo_optical_elements` is required
 
-'''
+```
 import geo_optical_elements as goe
 oe = goe.optical_elements()
-'''
+```
 
-With 'oe' we can currently generate primitives such as cubes, spheres, hemispheres and cylinders as well as more complex meshes such as parabolic mirrors, spherical lenses and other surfaces of revolution from 2D curves.
+With `oe` we can currently generate primitives such as cubes, spheres, hemispheres and cylinders as well as more complex meshes such as parabolic mirrors, spherical lenses and other surfaces of revolution from 2D curves.
 
 To create a hemisphere intended to measure a directional pattern of our light sources oe.hemisphere is called
  
-'hemisphere = oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)'
+`hemisphere = oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)`
 
 The center of the hemisphere is placed at [0,0,0] and its radius is 500. To define it as a measuring surface it is assigned an IOR or 0.0. A termination surface would have an IOR of -1.0 and typical materials would be assigned an IOR > 1.0. Note that currently IOR values can not be greater than 1000.
 
-To create a parabolic mirror with a foal point at [0,0,0] and a focal length of 5 and a dish diameter of 20 'oe.parabolic_mirror' can be used as follows
+To create a parabolic mirror with a foal point at [0,0,0] and a focal length of 5 and a dish diameter of 20 `oe.parabolic_mirror` can be used as follows
 
-'parabolic_mirror = oe.parabolic_mirror(focus=[0,0,0],focal_length=5.0,diameter=20.0,reflectivity = 0.98)'
+`parabolic_mirror = oe.parabolic_mirror(focus=[0,0,0],focal_length=5.0,diameter=20.0,reflectivity = 0.98)`
 
 Note that the reflectivity is encoded in the IOR value of the GeoObject in order to keep the raytracer code simple. This is also the reason why IOR > 1000 is not permitted for refractive materials as an IOR = 1000.98 would mean "Mirror with reflectivity 98%" to the raytracer.
 
 Finally, optical elements can be moved and rotated as follows:
 
-'''
+```
 parabolic_mirror.rotate(axis="y",angle=-np.pi/2,pivot = (0,0,0,0))
 parabolic_mirror.translate([1,1,0])
-'''
+```
