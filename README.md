@@ -1,7 +1,9 @@
 LightPyCL
 =========
 
-LightPyCL is a high performance physical 3D ray-tracer written in Python/PyOpenCL for the evaluation of optical elements with arbitrary 3D geometry.
+LightPyCL is a high performance physical 3D ray-tracer written in Python/PyOpenCL for the evaluation of optical elements with arbitrary 3D geometry. LightPyCL is intended to simulate the behaviour of intricate optical elements and systems when illuminated by lightsources with arbitrary directional characteristics and configurations. LightPyCL is not intended for rendering pretty graphics but could potentially be used to create accurate illumination maps in a timely manner. 
+
+LightPyCL is released under the GPLv3 and is free software released in hope that it will be useful to someone.
 
 ## Features
 
