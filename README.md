@@ -90,9 +90,69 @@ To create a parabolic mirror with a foal point at [0,0,0] and a focal length of 
 
 Note that the reflectivity is encoded in the IOR value of the GeoObject in order to keep the raytracer code simple. This is also the reason why IOR > 1000 is not permitted for refractive materials as an IOR = 1000.98 would mean "Mirror with reflectivity 98%" to the raytracer.
 
-Finally, optical elements can be moved and rotated as follows:
+Optical elements can be moved and rotated as follows:
 
 ```
 parabolic_mirror.rotate(axis="y",angle=-np.pi/2,pivot = (0,0,0,0))
 parabolic_mirror.translate([1,1,0])
 ```
+
+Note that `translate` performs only a relative displacement of the mesh.
+
+Finally, after generating and positioning the optical elements, they must be assembled into a scene for the raytracer
+
+`scene = [hemisphere, parabolic_mirror]`
+
+The raytracer then converts all the meshes into a geometry buffer that is sent to the CL device.
+
+### Initializing and running the raytracer
+
+The raytracer is an iterative tracer that takes a set of rays as an input and intersects them with the scene geometry. The closest intersections are used as the origin for reflected and refracted rays which are the output of one iteration. The output rays of an iteration (intersection and reflection/refraction cycle) are pruned by removing all measured and terminated rays and then used as the new input rays for the next iteration. Before the ray pruning the intersected input rays and the reflected and refracted rays are collected in a result buffer for later processing.
+
+To use the raytracer the class `iterative_tracer` must be imported and initialized
+
+```
+import numpy as np
+import iterative_tracer as it
+tracer = it.CL_Tracer(platform_name="NVIDIA",device_name="770")
+```
+
+this tells the tracer to use an nVidia GTX770 card. Alternatively if the tracer should be run on a CPU the platform_name="AMD" and device_name="i7" can be selected. If you privide an empty or invalid platform_name and device string_string the first device of the first platform is used. Note that the platform_name and device_name string must only be contained within the full platform and device specifiers.
+
+Once initialized, the tracer can be run with the following command
+
+```
+iterations  = 8
+max_ray_len = 1e3
+ior_env     = 1.0
+tracer.iterative_tracer(light_source=lightsources,meshes=scene,trace_iterations=iterations,max_ray_len=max_ray_len,ior_env=ior_env)
+```
+
+`iterations` tels the raytracer to follow the rays to a depth of 8.
+`max_ray_len = np.float32(1e3)` specifies the maximum length a ray can have if it does not intersect.
+`ior_env     = np.float32(1.0)` determines the refractive index of the environment (1.0 for vacuum).
+
+Once the tracer has completed its task, the results can be found in `tracer.results`. The resulting traced scene can be saved to a DXF file with `tracer.save_traced_scene("./results.dxf")`. Note that saving the file can take a long time when large amounts of rays have been traced.
+
+To access only the final position and intensity of the measured rays you can call `tracer.get_measured_rays()` which will return a tuple `(pos,pow)` of the vertex array pos and float array pow.
+
+### Postprocessing and plotting
+
+When the tracing is done, the results can be analysed in a 2D directivity plot with stereographic mapping or with linear elevation and azimuth mapped to a circle surface. The measured data can also be plotted to a 1D azimuth/elevation histogram. All plots are corrected for mapping distortion and should give the correct power values for their corresponding surface and line elements.
+
+With 
+
+```
+nf=2.0
+m_surf_extent=((-np.pi/nf,np.pi/nf),(-np.pi/nf,np.pi/nf))
+m_points=100 
+tracer.plot_binned_data(limits=m_surf_extent,points=m_points,use_angular=True,use_3d=True)
+```
+
+you will get a 3D surface plot of the power distribution along the measurement surface mapped to elevation and azimuth of the ray measured from [0,0,0] in the scene and an elevation extent of +-pi/2.
+
+With 
+
+`tracer.plot_elevation_histogram(points=90,pole=[0,0,1,0])`
+
+you can show an aggregated elevation plot that assumes rotational symmetry around the axis defined by `pole` and 90 bins.
