@@ -62,6 +62,8 @@ ior_env = np.float32(1.0)
 # setup a hemisphere to measure the lightsources spatial power distribution
 meshes = [oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)] 
 
+m4 = oe.cube(center=(0,0,-2.01,0),size=[50,50,2,0],IOR=1000.98)
+meshes.append(m4)
 time2 = time()
 prep_time = time2 - time1
 	
@@ -78,14 +80,14 @@ sim_time = time2 - time1
 
 # save results and scene to a python pickle for later processing
 # it will be saved under the current time and date as: YYYY.MM.DD.hh.mm.ss-tracer_results.txt
-pickle_path = tr.pickle_results()
+#pickle_path = tr.pickle_results()
 
 #=========================================================================
 #        YOU COULD QUIT HERE AND CONTINUE LATER WITH PICKLED DATA
 #=========================================================================
 
 # test loading the pickle
-tr.load_pickle_results(pickle_path)
+#tr.load_pickle_results(pickle_path)
 
 # fetch results for further processing
 resulting_rays = tr.results

@@ -294,7 +294,7 @@ class CL_Tracer():
 				time2 = time()
 				t_fresnell = time2 -time1
 				print "Fresnell processing time:      ", time2 - time1, "s" 
-				print "Performance:                   ", (np.int64(part_ray_count_this_iter)*np.int64(tri_count))/np.float128(t_fresnell+t_intersect+t_postproc), "refractive intersections/s"
+				print "Performance:                   ", (np.int64(part_ray_count_this_iter)*np.int64(tri_count))/np.float128(t_fresnell+t_intersect+t_postproc), "RI/s"
 
 				# FETCH RESULTS FROM CL DEV
 				print "Fetching results from device."
@@ -349,7 +349,7 @@ class CL_Tracer():
 		pwr = None
 		k   = 0
 		for (rays_origin,rays_dest,r_pow,r_meas) in self.results:
-			idx         = np.where(r_meas>=.99)[0]
+			idx         = np.where(r_meas>=.9)[0]
 			rays_dest_m = rays_dest[idx]
 			r_pow_m	    = r_pow[idx]
 			if k==0:
@@ -357,7 +357,8 @@ class CL_Tracer():
 				pwr = r_pow_m
 			else:
 				pos =  np.concatenate((pos,rays_dest_m),axis=0)
-				pwr =  np.concatenate((pwr,r_pow_m),    axis=0)
+				pwr =  np.concatenate((pwr.flatten(),r_pow_m.flatten()),    axis=0)
+			k+=1
 		return (pos,pwr)
 	
 	def get_binned_data(self,limits=((-10,10),(-10,10)),points=500):
@@ -453,7 +454,7 @@ class CL_Tracer():
 			
 		x=x_dev.get()
 		y=y_dev.get()
-		pwr=pwr_dev.get()
+		pwr=np.float64(pwr_dev.get())
 	
 		time2 = time()
 		dx = np.float64(limits[0][1]-limits[0][0])/np.float64(points)

@@ -7,7 +7,7 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 
 ## Features
 
-* Simplicity:  
+* Simplicity:
 	* python is used for scene scripting and data pre- and post-processing.
 	* with a few lines of python code a scene can be setup and simulated.
 	* with a few more lines the results can be processed and displayed.
@@ -16,7 +16,7 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 	* 1 000 000 rays to accurately sample a scene. Not a problem!
 	* 100 000 polygons on top of that. Easy! 
 * Results can be stored in a python pickle for further evaluation at a later time.
-* Traced and untraced scenes can be saved as DXF files.
+* DXF output of traced and untraced scenes.
 * LightPyCL supports positive index materials, mirrors, termination surfaces and measurement surfaces.
 * Any material can be applied to any mesh. This means you can 
 	* measure the spatial distribution of light on any kind of surface geometry.
@@ -24,8 +24,8 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 	* reflect and refract light from/into an arbitrarily shaped object.
 * Unpolarized rays are propagated in a physically correct fashion.
 * Power transmission and directivity analysis for unpolarized light.
-* Basic mesh transformations can be performed on optical elements.
-* Simulate many light sources efficiently by using a single light source and scene symmetries.
+* Basic mesh transformations on optical elements.
+* Leverageing of scene symmetries to simulate many light sources from results of one.
 * Generate optical elements directly from python either by revolving a 2D curve or parametrically generating a mesh.
 
 ## Prerequisites
@@ -69,7 +69,7 @@ The first light source origin is placed on the left hand side of the scene (x=-1
 
 The first source is pointing to the upper right [1,0,1] and the second source is pointing up left [-1,0,1] with a respective power of 1.0 and 2.0 and the same amount of rays.
 
-Finally, all the light sources are added to the list *lightsources* with can be handed to the raytracer.
+Finally, all the light sources are added to the list *lightsources* which can be handed to the raytracer.
 
 ### Optical elements and scene objects
 
