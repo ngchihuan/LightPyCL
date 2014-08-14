@@ -1,15 +1,20 @@
 LightPyCL
 =========
 
-LightPyCL is a high performance physical 3D ray-tracer written in Python/PyOpenCL for the evaluation of optical elements with arbitrary 3D geometry. LightPyCL is intended to simulate the behaviour of intricate optical elements and systems when illuminated by lightsources with arbitrary directional characteristics and configurations. LightPyCL is not intended for rendering pretty graphics but could potentially be used to create accurate illumination maps in a timely manner. 
+LightPyCL is a high performance physical 3D ray-tracer written in Python/PyOpenCL for the evaluation of optical elements with arbitrary 3D geometry. LightPyCL is intended to simulate the behaviour of intricate optical elements and systems when illuminated by light sources with arbitrary directional characteristics and configurations. LightPyCL is not intended for rendering pretty graphics but could potentially be used to create accurate illumination maps in a timely manner. 
 
 LightPyCL is released under the GPLv3 and is free software released in hope that it will be useful to someone.
 
 ## Features
 
-* Simplicity:  python is used for scene scripting and data pre- and post-processing.
+* Simplicity:  
+	* python is used for scene scripting and data pre- and post-processing.
+	* with a few lines of python code a scene can be setup and simulated.
+	* with a few more lines the results can be processed and displayed.
 * Performance: calculations are done with OpenCL 
 	* calculations can be efficiently run on CPUs or GPUs.
+	* 1 000 000 rays to accurately sample a scene. Not a problem!
+	* 100 000 polygons on top of that. Easy! 
 * Results can be stored in a python pickle for further evaluation at a later time.
 * Traced and untraced scenes can be saved as DXF files.
 * LightPyCL supports positive index materials, mirrors, termination surfaces and measurement surfaces.
@@ -31,14 +36,14 @@ To get LightPyCl to work, you will need the following things.
 Installing instructions for PyOpenCL can be found [here](http://wiki.tiker.net/PyOpenCL/Installation/Linux).
 2. [dxfwrite](https://pypi.python.org/pypi/dxfwrite/) for 3D geometry output.
 3. python-numpy and python-matplotlib.
-4. Some DXF viewer (like [g3dviewer](http://automagically.de/g3dviewer/) or [gCAD3D](http://www.gcad3d.org/)).
+4. Some DXF viewer (like [g3dviewer](http://automagically.de/g3dviewer/) or [gCAD3D](http://www.gcad3d.org/)) to view saved geometry and traced scenes.
 
 
 ## Usage
 
-To get LightPyCL to run you need to setup your light sources and optical elements. Additionally you can setup surfaces that terminate rays or surfaces that terminate rays and measure their intensity.
+To get LightPyCL to run you need to setup your light sources and optical elements. Additionally you can setup surfaces that terminate rays that don't need to be traced further or surfaces that terminate rays and measure their intensity simultaneously in order to measure directional characteristics.
 
-Some examples are included in the repo to help you get started.
+Some examples are included in the repository to help you get started.
 
 ### Light sources
 
@@ -116,7 +121,7 @@ import iterative_tracer as it
 tracer = it.CL_Tracer(platform_name="NVIDIA",device_name="770")
 ```
 
-this tells the *tracer* to use an nVidia GTX770 card. Alternatively, if the tracer should be run on a CPU the *platform_name*="AMD" and *device_name*="i7" can be selected. If you privide an empty or invalid *platform_name* and *device_name* string the first device of the first platform is used. Note that the *platform_name* and *device_name* string must only be contained within the full platform and device specifiers.
+this tells the *tracer* to use an nVidia GTX770 card. Alternatively, if the tracer should be run on a CPU the *platform_name*="AMD" and *device_name*="i5" can be selected. If you provide an empty or invalid *platform_name* and *device_name* string the first device of the first platform is used. Note that the *platform_name* and *device_name* string must only be contained within the full platform and device specifiers.
 
 Once initialized, the *tracer* can be run with the following command
 
@@ -127,7 +132,7 @@ ior_env     = 1.0
 tracer.iterative_tracer(light_source=lightsources,meshes=scene,trace_iterations=iterations,max_ray_len=max_ray_len,ior_env=ior_env)
 ```
 
-*iterations* tels the raytracer to follow the rays to a depth of 8.
+*iterations* tells the raytracer to follow the rays to a depth of 8.
 *max_ray_len = 1e3* specifies the maximum length a ray can have if it does not intersect.
 *ior_env     = 1.0* determines the refractive index of the environment (1.0 for vacuum).
 
