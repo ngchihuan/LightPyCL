@@ -128,8 +128,8 @@ tracer.iterative_tracer(light_source=lightsources,meshes=scene,trace_iterations=
 ```
 
 `iterations` tels the raytracer to follow the rays to a depth of 8.
-`max_ray_len = np.float32(1e3)` specifies the maximum length a ray can have if it does not intersect.
-`ior_env     = np.float32(1.0)` determines the refractive index of the environment (1.0 for vacuum).
+`max_ray_len = 1e3` specifies the maximum length a ray can have if it does not intersect.
+`ior_env     = 1.0` determines the refractive index of the environment (1.0 for vacuum).
 
 Once the tracer has completed its task, the results can be found in `tracer.results`. The resulting traced scene can be saved to a DXF file with `tracer.save_traced_scene("./results.dxf")`. Note that saving the file can take a long time when large amounts of rays have been traced.
 
