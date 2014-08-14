@@ -161,8 +161,14 @@ you can show an aggregated elevation plot that assumes rotational symmetry aroun
 The files __example_directivity_lens.py__, __example_directivity_parabolic_mirror.py__ and __example_directivity_sphericalMeasSurf.py__ provided with LightPyCL are constructed just as described in the previous subsections of this __README__ and are ready to run. To try out the tracer examples just run
 
 `python example_directivity_lens.py`,
-`python example_directivity_parabolic_mirror.py` or
-`python example_directivity_sphericalMeasSurf.py`.
+
+`python example_directivity_parabolic_mirror.py` 
+
+or
+
+`python example_directivity_sphericalMeasSurf.py` 
+
+in your favourite terminal emulator.
 
 
 ## Performance
