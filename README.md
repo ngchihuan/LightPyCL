@@ -42,7 +42,7 @@ Some examples are included in the repo to help you get started.
 
 ### Light sources
 
-To create a light source you will need to import the light_source class
+To create a light source you will need to import the *light_source* class
 
 `import light_source`
 
@@ -58,36 +58,36 @@ lightsource1 = light_source.light_source(center=[1,0,0,0], direction=[-1,0,1], d
 lightsources = [lightsource0, lightsource1]
 ```
 
-ray_count defines the amount of rays the light source is to emit and directivity is the directional power distribution function of the light source. Note that elevation is measured away from the direction the light source is pointing in.
+*ray_count* defines the amount of rays the light source is to emit and *directivity* is the directional power distribution function of the light source. Note that elevation is measured away from the *direction* the light source is pointing in.
 
 The first light source origin is placed on the left hand side of the scene (x=-1, y and z = 0) and the second source is on the right (x=+1).
 
 The first source is pointing to the upper right [1,0,1] and the second source is pointing up left [-1,0,1] with a respective power of 1.0 and 2.0 and the same amount of rays.
 
-Finally, all the light sources are added to the list `lightsources` with can be handed to the raytracer.
+Finally, all the light sources are added to the list *lightsources* with can be handed to the raytracer.
 
 ### Optical elements and scene objects
 
-To generate optical elements the an instance of `geo_optical_elements` is required
+To generate optical elements the an instance of *geo_optical_elements* is required
 
 ```
 import geo_optical_elements as goe
 oe = goe.optical_elements()
 ```
 
-With `oe` we can currently generate primitives such as cubes, spheres, hemispheres and cylinders as well as more complex meshes such as parabolic mirrors, spherical lenses and other surfaces of revolution from 2D curves.
+With *oe* we can currently generate primitives such as cubes, spheres, hemispheres and cylinders as well as more complex meshes such as parabolic mirrors, spherical lenses and other surfaces of revolution from 2D curves.
 
-To create a hemisphere intended to measure a directional pattern of our light sources oe.hemisphere is called
+To create a hemisphere intended to measure a directional pattern of our light sources *oe.hemisphere* is called
  
 `hemisphere = oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)`
 
-The center of the hemisphere is placed at [0,0,0] and its radius is 500. To define it as a measuring surface it is assigned an IOR or 0.0. A termination surface would have an IOR of -1.0 and typical materials would be assigned an IOR > 1.0. Note that currently IOR values can not be greater than 1000.
+The *center* of the hemisphere is placed at [0,0,0] and its *radius* is 500. To define it as a measuring surface it is assigned an *IOR* (index of refraction) of 0.0. A termination surface would have an *IOR* of -1.0 and typical materials would be assigned an *IOR* > 1.0. Note that currently *IOR* values can not be greater than 1000.
 
-To create a parabolic mirror with a foal point at [0,0,0] and a focal length of 5 and a dish diameter of 20 `oe.parabolic_mirror` can be used as follows
+To create a parabolic mirror with a focal point *focus* at [0,0,0] and a *focal_length* of 5 and a dish *diameter* of 20 *oe.parabolic_mirror* can be used as follows
 
 `parabolic_mirror = oe.parabolic_mirror(focus=[0,0,0],focal_length=5.0,diameter=20.0,reflectivity = 0.98)`
 
-Note that the reflectivity is encoded in the IOR value of the GeoObject in order to keep the raytracer code simple. This is also the reason why IOR > 1000 is not permitted for refractive materials as an IOR = 1000.98 would mean "Mirror with reflectivity 98%" to the raytracer.
+Note that the *reflectivity* is encoded in the *IOR* value of the *GeoObject* in order to keep the raytracer code simple. This is also the reason why *IOR* > 1000 is not permitted for refractive materials as an *IOR* = 1000.98 would mean "Mirror with reflectivity of 98%" to the raytracer.
 
 Optical elements can be moved and rotated as follows:
 
@@ -96,9 +96,9 @@ parabolic_mirror.rotate(axis="y",angle=-np.pi/2,pivot = (0,0,0,0))
 parabolic_mirror.translate([1,1,0])
 ```
 
-Note that `translate` performs only a relative displacement of the mesh.
+Note that *translate* performs only a relative displacement of the mesh.
 
-Finally, after generating and positioning the optical elements, they must be assembled into a scene for the raytracer
+Finally, after generating and positioning the optical elements, they must be assembled into a *scene* for the raytracer
 
 `scene = [hemisphere, parabolic_mirror]`
 
@@ -108,7 +108,7 @@ The raytracer then converts all the meshes into a geometry buffer that is sent t
 
 The raytracer is an iterative tracer that takes a set of rays as an input and intersects them with the scene geometry. The closest intersections are used as the origin for reflected and refracted rays which are the output of one iteration. The output rays of an iteration (intersection and reflection/refraction cycle) are pruned by removing all measured and terminated rays and then used as the new input rays for the next iteration. Before the ray pruning the intersected input rays and the reflected and refracted rays are collected in a result buffer for later processing.
 
-To use the raytracer the class `iterative_tracer` must be imported and initialized
+To use the raytracer the class *iterative_tracer* must be imported and initialized
 
 ```
 import numpy as np
@@ -116,9 +116,9 @@ import iterative_tracer as it
 tracer = it.CL_Tracer(platform_name="NVIDIA",device_name="770")
 ```
 
-this tells the tracer to use an nVidia GTX770 card. Alternatively if the tracer should be run on a CPU the platform_name="AMD" and device_name="i7" can be selected. If you privide an empty or invalid platform_name and device string_string the first device of the first platform is used. Note that the platform_name and device_name string must only be contained within the full platform and device specifiers.
+this tells the *tracer* to use an nVidia GTX770 card. Alternatively, if the tracer should be run on a CPU the *platform_name*="AMD" and *device_name*="i7" can be selected. If you privide an empty or invalid *platform_name* and *device_name* string the first device of the first platform is used. Note that the *platform_name* and *device_name* string must only be contained within the full platform and device specifiers.
 
-Once initialized, the tracer can be run with the following command
+Once initialized, the *tracer* can be run with the following command
 
 ```
 iterations  = 8
@@ -127,13 +127,13 @@ ior_env     = 1.0
 tracer.iterative_tracer(light_source=lightsources,meshes=scene,trace_iterations=iterations,max_ray_len=max_ray_len,ior_env=ior_env)
 ```
 
-`iterations` tels the raytracer to follow the rays to a depth of 8.
-`max_ray_len = 1e3` specifies the maximum length a ray can have if it does not intersect.
-`ior_env     = 1.0` determines the refractive index of the environment (1.0 for vacuum).
+*iterations* tels the raytracer to follow the rays to a depth of 8.
+*max_ray_len = 1e3* specifies the maximum length a ray can have if it does not intersect.
+*ior_env     = 1.0* determines the refractive index of the environment (1.0 for vacuum).
 
-Once the tracer has completed its task, the results can be found in `tracer.results`. The resulting traced scene can be saved to a DXF file with `tracer.save_traced_scene("./results.dxf")`. Note that saving the file can take a long time when large amounts of rays have been traced.
+Once the tracer has completed its task, the results can be found in *tracer.results*. The resulting traced scene can be saved to a DXF file with *tracer.save_traced_scene("./results.dxf")*. Note that saving the file can take a long time when large amounts of rays have been traced.
 
-To access only the final position and intensity of the measured rays you can call `tracer.get_measured_rays()` which will return a tuple `(pos,pow)` of the vertex array pos and float array pow.
+To access only the final position and intensity of the measured rays you can call *tracer.get_measured_rays()* which will return a tuple *(pos,pow)* of the vertex array *pos* and float array *pow*.
 
 ### Postprocessing and plotting
 
@@ -154,11 +154,11 @@ With
 
 `tracer.plot_elevation_histogram(points=90,pole=[0,0,1,0])`
 
-you can show an aggregated elevation plot that assumes rotational symmetry around the axis defined by `pole` and 90 bins.
+you can show an aggregated elevation plot that assumes rotational symmetry around the axis defined by *pole* and 90 bins.
 
 ### Putting it all together
 
-The files __example_directivity_lens.py__, __example_directivity_parabolic_mirror.py__ and __example_directivity_sphericalMeasSurf.py__ provided with LightPyCL are constructed just as described in the previous subsections of this __README__ and are ready to run. To try out the tracer examples just run
+The files *example_directivity_lens.py*, *example_directivity_parabolic_mirror.py* and *example_directivity_sphericalMeasSurf.py* provided with LightPyCL are constructed just as described in the previous subsections of this *README* and are ready to run. To try out the tracer examples just run
 
 `python example_directivity_lens.py`,
 
