@@ -29,11 +29,8 @@ To get LightPyCl to work, you will need the following things.
 
 1. [PyOpenCL](http://mathema.tician.de/software/pyopencl/) for the heavy lifting.
 Installing instructions for PyOpenCL can be found [here](http://wiki.tiker.net/PyOpenCL/Installation/Linux).
-
 2. [dxfwrite](https://pypi.python.org/pypi/dxfwrite/) for 3D geometry output.
-
 3. python-numpy and python-matplotlib.
-
 4. Some DXF viewer (like [g3dviewer](http://automagically.de/g3dviewer/) or [gCAD3D](http://www.gcad3d.org/)).
 
 
@@ -159,6 +156,15 @@ With
 
 you can show an aggregated elevation plot that assumes rotational symmetry around the axis defined by `pole` and 90 bins.
 
+### Putting it all together
+
+The files __example_directivity_lens.py__, __example_directivity_parabolic_mirror.py__ and __example_directivity_sphericalMeasSurf.py__ provided with LightPyCL are constructed just as described in the previous subsections of this __README__ and are ready to run. To try out the tracer examples just run
+
+`python example_directivity_lens.py`,
+`python example_directivity_parabolic_mirror.py` or
+`python example_directivity_sphericalMeasSurf.py`.
+
+
 ## Performance
 
 The performance of the raytracer is determined by measuring the time __T__ a combined intersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. Because every ray has to search all triangles in a scene for a valid closest intersection, __N__ * __M__ gives the amount of performed refractive intersections or put differently the amount of rays that could be intersected and refracted if the scene consisted of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s" or "RI/s".
@@ -170,5 +176,5 @@ Here are some results from various platforms:
 	<tr><td>nVidia GTX770</td>	<td>~ 9.9e9 RI/s</td></tr>
 </table>
 
-Performance results are printed in the console during simulation, so if you would like to share those results, drop me a line.
+Performance results are printed in the console during simulation, so if you would like to share those results, drop me a line!
 
