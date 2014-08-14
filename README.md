@@ -158,3 +158,17 @@ With
 `tracer.plot_elevation_histogram(points=90,pole=[0,0,1,0])`
 
 you can show an aggregated elevation plot that assumes rotational symmetry around the axis defined by `pole` and 90 bins.
+
+## Performance
+
+The performance of the raytracer is determined by measuring the time __T__ a combined itersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. __N__ * __M__ gives the amount of performed refractive intersections or put differently the amount of rays could be refracted if the scene was made of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s".
+
+Here are some results from various platforms:
+<table>
+	<tr><td>Intel i5</td>		<td>~ 0.5e9 refractive intersections/s</td></tr>
+	<tr><td>nVidia GTX460</td>	<td>~ 4.1e9 refractive intersections/s</td></tr>
+	<tr><td>nVidia GTX770</td>	<td>~ 9.9e9 refractive intersections/s</td></tr>
+</table>
+
+Performance results are printed in the console during simulation, so if you would like to share those results, drop me a line.
+
