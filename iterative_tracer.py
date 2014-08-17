@@ -396,12 +396,19 @@ class CL_Tracer():
 		#calculate 1D histogram over all elevations
 		#(H,x) = np.histogram(elevation,bins=points,weights=pwr)
 		import matplotlib.pyplot as plt
-		idx = np.where(elevation > 1e-6)[0]
-		plt.hist(elevation[idx],bins=points,weights=(pwr[idx].T/np.sin(elevation[idx])).flatten())
+		idx = np.where(elevation > 1e-12)[0]
+		hist_data = plt.hist(elevation[idx],bins=points,weights=(pwr[idx].T/np.sin(elevation[idx])).flatten(),cumulative=False)
 		plt.title("Elevation Histogram")
 		plt.xlabel("Elevation")
 		plt.ylabel("Power")
 		pylab.savefig("./elevation_power_distribution.pdf")
+		
+		halfmax = hist_data[1].max()/2.0
+		hidx = np.where(np.absolute(hist_data[1]-halfmax)==min(np.absolute(hist_data[1]-halfmax)))
+		elevation_hmax = elevation[hidx]
+		print "Power in halfwidth:   ", sum(pwr[np.where(elevation>elevation_hmax)])
+		print "Total measured power: ", sum(pwr)
+		print "Beam halfwidth angle: ", elevation_hmax[0]/np.pi*180.0 
 		plt.show()
 
 	def get_binned_data_stereographic(self,limits=((-1,1),(-1,1)),points=500): #project data stereographically onto xy plane and bin it
