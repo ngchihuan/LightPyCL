@@ -1,21 +1,22 @@
 LightPyCL
 =========
 
-LightPyCL is a high performance physical 3D ray-tracer written in Python/PyOpenCL for the evaluation of optical elements with arbitrary 3D geometry. LightPyCL is intended to simulate the behaviour of intricate optical elements and systems when illuminated by light sources with arbitrary directional characteristics and configurations. LightPyCL is not intended for rendering pretty graphics but could potentially be used to create accurate illumination maps in a timely manner. 
+LightPyCL is a high-performance physical 3D raytracer written in Python/PyOpenCL for the evaluation of optical elements with arbitrary 3D geometry. LightPyCL is intended to simulate the behaviour of intricate optical elements and systems illuminated by light sources with arbitrary directional characteristics and configurations. LightPyCL is not intended for rendering pretty graphics but could potentially be used to create accurate illumination maps in a timely manner. 
 
 LightPyCL is released under the GPLv3 and is free software released in hope that it will be useful to someone.
 
 ## Features
 
 * Simplicity:
-	* python is used for scene scripting and data pre- and post-processing.
-	* with a few lines of python code a scene can be setup and simulated.
-	* with a few more lines the results can be processed and displayed.
-* Performance: calculations are done with OpenCL 
-	* calculations can be efficiently run on CPUs or GPUs.
-	* 1 000 000 rays to accurately sample a scene. Not a problem!
-	* 100 000 polygons on top of that. Easy! 
-* Results can be stored in a python pickle for further evaluation at a later time.
+	* Python is used for scene scripting and data pre- and post-processing.
+	* With a few lines of Python code a scene can be set up and simulated.
+	* With a few more lines the results can be processed and displayed.
+* Performance: 
+	* Calculations are done with OpenCL.
+	* Calculations can be efficiently run on CPUs or GPUs.
+	* 1,000,000 rays to accurately sample a scene. Not a problem!
+	* 100,000 polygons on top of that. Easy! 
+* Results can be stored in a Python pickle for further evaluation at a later time.
 * DXF output of traced and untraced scenes.
 * LightPyCL supports positive index materials, mirrors, termination surfaces and measurement surfaces.
 * Any material can be applied to any mesh. This means you can 
@@ -25,12 +26,12 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 * Unpolarized rays are propagated in a physically correct fashion.
 * Power transmission and directivity analysis for unpolarized light.
 * Basic mesh transformations on optical elements.
-* Leverageing of scene symmetries to simulate many light sources from results of one.
-* Generate optical elements directly from python either by revolving a 2D curve or parametrically generating a mesh.
+* Leveraging of scene symmetries to simulate many light sources from results of one.
+* Generate optical elements directly from Python either by revolving a 2D curve or parametrically generating a mesh.
 
 ## Prerequisites
 
-To get LightPyCl to work, you will need the following things.
+To get LightPyCl to work, you will need the following:
 
 1. [PyOpenCL](http://mathema.tician.de/software/pyopencl/) for the heavy lifting.
 Installing instructions for PyOpenCL can be found [here](http://wiki.tiker.net/PyOpenCL/Installation/Linux).
@@ -41,7 +42,7 @@ Installing instructions for PyOpenCL can be found [here](http://wiki.tiker.net/P
 
 ## Usage
 
-To get LightPyCL to run you need to setup your light sources and optical elements. Additionally you can setup surfaces that terminate rays that don't need to be traced further or surfaces that terminate rays and measure their intensity simultaneously in order to measure directional characteristics.
+To get LightPyCL to run, you need to set up your light sources and optical elements. Additionally you can set up surfaces that terminate rays that don't need to be traced further or surfaces that terminate rays and measure their intensity simultaneously in order to measure directional characteristics.
 
 Some examples are included in the repository to help you get started.
 
@@ -63,17 +64,17 @@ lightsource1 = light_source.light_source(center=[1,0,0,0], direction=[-1,0,1], d
 lightsources = [lightsource0, lightsource1]
 ```
 
-*ray_count* defines the amount of rays the light source is to emit and *directivity* is the directional power distribution function of the light source. Note that elevation is measured away from the *direction* the light source is pointing in.
+*ray_count* defines the number of rays the light source is to emit, and *directivity* is the directional power distribution function of the light source. Note that elevation is measured away from the *direction* the light source is pointing in.
 
 The first light source origin is placed on the left hand side of the scene (x=-1, y and z = 0) and the second source is on the right (x=+1).
 
-The first source is pointing to the upper right [1,0,1] and the second source is pointing up left [-1,0,1] with a respective power of 1.0 and 2.0 and the same amount of rays.
+The first source is pointing to the upper right [1,0,1] and the second source is pointing up left [-1,0,1] with a respective power of 1.0 and 2.0 and the same number of rays.
 
 Finally, all the light sources are added to the list *lightsources* which can be handed to the raytracer.
 
 ### Optical elements and scene objects
 
-To generate optical elements the an instance of *geo_optical_elements* is required
+To generate optical elements, an instance of *geo_optical_elements* is required
 
 ```
 import geo_optical_elements as goe
@@ -82,17 +83,17 @@ oe = goe.optical_elements()
 
 With *oe* we can currently generate primitives such as cubes, spheres, hemispheres and cylinders as well as more complex meshes such as parabolic mirrors, spherical lenses and other surfaces of revolution from 2D curves.
 
-To create a hemisphere intended to measure a directional pattern of our light sources *oe.hemisphere* is called
+To create a hemisphere intended to measure a directional pattern of our light sources, *oe.hemisphere* is called
  
 `hemisphere = oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)`
 
-The *center* of the hemisphere is placed at [0,0,0] and its *radius* is 500. To define it as a measuring surface it is assigned an *IOR* (index of refraction) of 0.0. A termination surface would have an *IOR* of -1.0 and typical materials would be assigned an *IOR* > 1.0. Note that currently *IOR* values can not be greater than 1000.
+The *center* of the hemisphere is placed at [0,0,0] and its *radius* is 500. To define it as a measuring surface, it is assigned an *IOR* (index of refraction) of 0.0. A termination surface would have an *IOR* of -1.0 and typical materials would be assigned an *IOR* > 1.0. Note that currently *IOR* values cannot be greater than 1000.
 
-To create a parabolic mirror with a focal point *focus* at [0,0,0] and a *focal_length* of 5 and a dish *diameter* of 20 *oe.parabolic_mirror* can be used as follows
+To create a parabolic mirror with a focal point *focus* at [0,0,0] and a *focal_length* of 5 and a dish *diameter* of 20, *oe.parabolic_mirror* can be used as follows
 
 `parabolic_mirror = oe.parabolic_mirror(focus=[0,0,0],focal_length=5.0,diameter=20.0,reflectivity = 0.98)`
 
-Note that the *reflectivity* is encoded in the *IOR* value of the *GeoObject* in order to keep the raytracer code simple. This is also the reason why *IOR* > 1000 is not permitted for refractive materials as an *IOR* = 1000.98 would mean "Mirror with reflectivity of 98%" to the raytracer.
+Note that the *reflectivity* is encoded in the *IOR* value of the *GeoObject* in order to keep the raytracer code simple. This is also the reason why *IOR* > 1000 is not permitted for refractive materials, as an *IOR* = 1000.98 would mean "mirror with reflectivity of 98%" to the raytracer.
 
 Optical elements can be moved and rotated as follows:
 
@@ -121,7 +122,7 @@ import iterative_tracer as it
 tracer = it.CL_Tracer(platform_name="NVIDIA",device_name="770")
 ```
 
-this tells the *tracer* to use an nVidia GTX770 card. Alternatively, if the tracer should be run on a CPU the *platform_name*="AMD" and *device_name*="i5" can be selected. If you provide an empty or invalid *platform_name* and *device_name* string the first device of the first platform is used. Note that the *platform_name* and *device_name* string must only be contained within the full platform and device specifiers.
+This tells the *tracer* to use an nVidia GTX770 card. Alternatively, if the tracer should be run on a CPU the *platform_name*="AMD" and *device_name*="i5" can be selected. If you provide an empty or invalid *platform_name* and *device_name* string the first device of the first platform is used. Note that the *platform_name* and *device_name* string must only be contained within the full platform and device specifiers.
 
 Once initialized, the *tracer* can be run with the following command
 
@@ -178,7 +179,7 @@ in your favourite terminal emulator.
 
 ## Performance
 
-The performance of the raytracer is determined by measuring the time __T__ a combined intersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. Because every ray has to search all triangles in a scene for a valid closest intersection, __N__ * __M__ gives the amount of performed refractive intersections or put differently the amount of rays that could be intersected and refracted if the scene consisted of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s" or "RI/s".
+The performance of the raytracer is determined by measuring the time __T__ a combined intersection and reflection/refraction cycle takes for __N__ input rays and __M__ triangles in a scene. Because every ray has to search all triangles in a scene for a valid closest intersection, __N__ * __M__ gives the number of performed refractive intersections or, put differently, the number of rays that could be intersected and refracted if the scene consisted of one triangle. Thus a comparative measure of performance is __N__ * __M__ / __T__ given in "refractive intersections/s" or "RI/s".
 
 Here are some results from various platforms:
 <table>
