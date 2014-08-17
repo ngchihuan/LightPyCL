@@ -227,6 +227,7 @@ class optical_elements():
 		curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,1,IOR)
 		return self.revolve_curve(curve2d, axis="x", ang=np.pi, ang_pts=36, IOR=IOR)
 		
+	
 	def curve_lens_spherical_biconcave(self,focus,r1,r2,d,diameter,axis,IOR):
 		# focus         coordinate of focus
 		# r1            radius left
@@ -364,10 +365,6 @@ class optical_elements():
 if __name__ == '__main__':	
 	print "generating test geometry"
 	oe = optical_elements()
-	#m  = oe.revolve_curve([[0, 0, 0], [1, 1, 0], [1, 2, 0], [0, 3, 0]],ang_pts=10)
-	#m_c= oe.cube((0,0,0,0),1,1.5)
-	m_l= oe.mirroring_concentrator(focus=(0,0),sx=-10,sy=0,dphi=np.pi/20,diameter=20,IOR=1.5)
-	m_l.rotate(axis="x",angle=np.pi/2,pivot = (0,0,0,0))
-	#tm = m.trimesh()
-	#tb = m.tribuf()
+	m_l= oe.parabolic_mirror(focus=(0,0,0),focal_length=5.0,diameter=20.0,reflectivity = 0.98)  
+	m_l.rotate(axis="y",angle=-np.pi/2,pivot = (0,0,0,0))
 	m_l.write_dxf("./lens.dxf")
