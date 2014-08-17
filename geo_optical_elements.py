@@ -34,7 +34,7 @@ class GeoObject():
 		self.IOR = ior
 
 	def translate(self,vec):
-		self.verticies = self.verticies + vec
+		self.verticies = self.verticies + np.array(vec)
 	
 	
 	def rotate(self,axis="x",angle=np.pi/2,pivot = (0,0,0,0)):
@@ -166,8 +166,8 @@ class optical_elements():
 
 	def topless_cylinder(self,center=(0,0,0),diameter=20.0,height=10.0,IOR=0.0):
 		N=72
-		x = np.array([-.5, .5]) * height   + center[1]
-		y = np.array([ .5, .5]) * diameter + center[0]
+		x = np.array([ 0.0, 0.0, 1.0]) * height   + center[1]
+		y = np.array([ 0.0,  .5,  .5]) * diameter + center[0]
 				
 		xy = []
 		for (a,b) in zip(x,y):
@@ -226,7 +226,7 @@ class optical_elements():
 		#(curve2d,f0,d0) = self.curve_lens_spherical_biconcave(focus,r1,r2,d,diameter,axis,lens_type,IOR)
 		curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,1,IOR)
 		return self.revolve_curve(curve2d, axis="x", ang=np.pi, ang_pts=36, IOR=IOR)
-			
+		
 	def curve_lens_spherical_biconcave(self,focus,r1,r2,d,diameter,axis,IOR):
 		# focus         coordinate of focus
 		# r1            radius left
@@ -359,6 +359,7 @@ class optical_elements():
 			xy.append([a,b])
 		 	
 		return (xy,f,d)
+
 
 if __name__ == '__main__':	
 	print "generating test geometry"
