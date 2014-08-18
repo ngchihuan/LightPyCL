@@ -40,7 +40,7 @@ os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 time1 = time()
 
 # Amount of rays to trace
-ray_count=300000
+ray_count=3000000
 # Amount of iterations to run the tracer. defines the depth rays are followed to.
 iterations = 4
 
@@ -62,14 +62,14 @@ ior_env = np.float32(1.0)
 # setup a hemisphere to measure the lightsources spatial power distribution
 meshes = [oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)] 
 
-m4 = oe.cube(center=(0,0,-2.01,0),size=[50,50,2,0],IOR=1000.98)
-meshes.append(m4)
+#m4 = oe.cube(center=(0,0,-2.01,0),size=[50,50,2,0],IOR=1000.98)
+#meshes.append(m4)
 time2 = time()
 prep_time = time2 - time1
 	
 # setup the tracer and select the CL platform and device to run the tracer on
 # if platform_name or and device_name are incorrect then the first device of the first platform will be used
-tr = it.CL_Tracer(platform_name="NVIDIA",device_name="770") #INIT properly
+tr = it.CL_Tracer(platform_name="NVIDIA",device_name="460") #INIT properly
 
 time1 = time()		
 # run the iterative tracer
@@ -80,14 +80,14 @@ sim_time = time2 - time1
 
 # save results and scene to a python pickle for later processing
 # it will be saved under the current time and date as: YYYY.MM.DD.hh.mm.ss-tracer_results.txt
-#pickle_path = tr.pickle_results()
+pickle_path = tr.pickle_results()
 
 #=========================================================================
 #        YOU COULD QUIT HERE AND CONTINUE LATER WITH PICKLED DATA
 #=========================================================================
 
 # test loading the pickle
-#tr.load_pickle_results(pickle_path)
+tr.load_pickle_results(pickle_path)
 
 # fetch results for further processing
 resulting_rays = tr.results
@@ -110,9 +110,11 @@ print "Measured power:    ", measured_power
 #setting to +-pi/2 for hemisphere
 m_surf_extent=((-np.pi/2.0,np.pi/2.0),(-np.pi/2.0,np.pi/2.0)) 
 #spatial resolution of binning
-m_points=100 
+m_points=90 
+tr.get_beam_width_half_power(points=m_points,pole=[0,0,1,0])
+tr.get_beam_HWHM(points=m_points,pole=[0,0,1,0])
 tr.plot_binned_data(limits=m_surf_extent,points=m_points,use_angular=True)
-tr.plot_elevation_histogram(points=30,pole=[0,0,1,0])
+tr.plot_elevation_histogram(points=m_points,pole=[0,0,1,0])
 
 # save traced scene to dxf file if the amount of rays is not too large.
 # if the ray_count is too high the dxf file will be sea urchin porn.
