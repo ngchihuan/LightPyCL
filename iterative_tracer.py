@@ -391,13 +391,17 @@ class CL_Tracer():
 		(pos,pwr) = self.get_measured_rays()
 		
 		pos0 = np.array(np.divide(pos,np.matrix(np.linalg.norm(pos,axis=1)).T))
-		elevation = np.arccos(np.dot(pos0,pole))
+		elevation = np.arccos(np.dot(pos0,pole)).flatten()
+		pwr = pwr.flatten()
 		
 		#calculate 1D histogram over all elevations
 		import matplotlib.pyplot as plt
-		idx = np.where(elevation > 1e-6)[0]
-		(H,x)=np.histogram(elevation[idx],bins=points,weights=(pwr[idx].T/np.sin(elevation[idx])).flatten())
-		plt.plot(x[0:-1],H)
+		#idx = np.where(elevation > 1e-6)[0]
+		#(H,x)=np.histogram(elevation[idx],bins=points,weights=(pwr[idx].T/np.sin(elevation[idx])).flatten())
+		(H,x)=np.histogram(elevation,bins=points,weights=pwr)
+		x = (x[0:-1] + x[1:])/2.0
+		H = H/np.sin(x)
+		plt.plot(x*180.0/np.pi,H)
 		plt.title("Elevation Histogram")
 		plt.xlabel("Elevation")
 		plt.ylabel("Intensity")
@@ -435,17 +439,19 @@ class CL_Tracer():
 		pos0 = np.array(np.divide(pos,np.matrix(np.linalg.norm(pos,axis=1)).T))
 		elevation0 = np.arccos(np.dot(pos0,pole))
 		elevation1 = elevation0
-		idx = np.where(elevation0>1e-6)
-		elevation0  = elevation0[idx] 
-		intensity0  = (pwr0[idx].T/np.sin(elevation0)).flatten()
+		#idx = np.where(elevation0>1e-6)
+		elevation0  = elevation0#[idx] 
+		intensity0  = pwr0 #(pwr0[idx].T/np.sin(elevation0)).flatten()
 		
 		SIDX = lambda s: sorted(range(len(s)), key=lambda k: s[k])
 		sort_idx = SIDX(elevation0)
 		
-		elevation = elevation0[sort_idx]
-		intensity = intensity0[sort_idx]
+		elevation = elevation0[sort_idx].flatten()
+		intensity = intensity0[sort_idx].flatten()
 		
 		(H,x) = np.histogram(a=elevation,bins=points,weights=intensity)
+		x = (x[0:-1] + x[1:])/2.0
+		H = (H.T/np.sin(x)).flatten()
 		
 		pwr_hmax = max(H)/2.0
 		pwr_hm_idx = np.where(np.absolute(H-pwr_hmax)==min(np.absolute(H-pwr_hmax)))[0]
@@ -587,8 +593,8 @@ class CL_Tracer():
 		(H,x_coord,y_coord)=np.histogram2d(x=x.flatten(),y=y.flatten(),bins=points,range=limits,weights=pwr.flatten())
 		self.hist_data = (H,x_coord,y_coord)
 		
-		xedges = x_coord
-		yedges = y_coord
+		xedges = x_coord * 180.0 / np.pi
+		yedges = y_coord * 180.0 / np.pi
 		extent = [xedges[0], xedges[-1], yedges[0], yedges[-1] ]
 		time2 = time()
 		print "Binning data:      ", time2-time1, "s"
@@ -612,7 +618,7 @@ class CL_Tracer():
         		pylab.savefig("./binned_3D_data_replicated_sources.pdf")
 			plt.show()
 		else: #if you really want 2D, have it!
-			pylab.imshow(np.log10(H),extent=extent,interpolation='nearest',origin='lower')
+			pylab.imshow(H,extent=extent,origin='lower')
 			pylab.colorbar()
 			pylab.savefig("./binned_2D_data_replicated_sources.pdf")
 			pylab.show()
