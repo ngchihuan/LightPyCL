@@ -1,6 +1,9 @@
 LightPyCL
 =========
 
+<img src="https://github.com/lillg/LightPyCL/blob/master/logo2.png"
+ alt="LightPyCL Logo" title="LightPyCL" align="right" />
+
 LightPyCL is a high-performance physical 3D raytracer written in Python/PyOpenCL for the evaluation of optical elements with arbitrary 3D geometry. LightPyCL is intended to simulate the behaviour of intricate optical elements and systems illuminated by light sources with arbitrary directional characteristics and configurations. LightPyCL is not intended for rendering pretty graphics but could potentially be used to create accurate illumination maps in a timely manner. 
 
 LightPyCL is released under the GPLv3 and is free software released in hope that it will be useful to someone.
@@ -161,6 +164,22 @@ With
 `tracer.plot_elevation_histogram(points=90,pole=[0,0,1,0])`
 
 you can show an aggregated elevation plot that assumes rotational symmetry around the axis defined by *pole* and 90 bins.
+
+If you need to know the beam width of your light source or your light source passing through some optics, you can use 
+
+`tracer.get_beam_width_half_power(points=90,pole=[0,0,1,0])`
+
+to find out at the angle (elevation) of the cone into which half the beams power is emitted.
+
+Alternatively, you can use
+
+`tracer.get_beam_HWHM(points=90,pole=[0,0,1,0])`
+
+to find the beams half width at half maximum. Note however that *get_beam_HWHM*, depending on the scene, requires a large number of rays to deliver accurate results.
+
+If you need any other evaluative tools that are not included currently, feel free to write up a few lines of code. The results are located in *tracer.results* as a list of the tuple *(ray_origins,ray_destinations,ray_powers,state_measured)*. *ray_origins[i]*, *ray_destinations[i]*, *ray_powers[i]* and *state_measured[i]* represent one ray and *state_measured[i]* indicates if the ray was terminated (*state_measured[i]=-1*), measured (*state_measured[i]=+1*) or still traversing the scene and thus neither measured or terminated (*state_measured[i]=0*).
+
+Please feel free to contribute your evaluation code or any other code/improvement to LightPyCL for that matter to the LightPyCL project.
 
 ### Putting it all together
 
