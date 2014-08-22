@@ -368,31 +368,13 @@ class CL_Tracer():
 		self.hist_data = (H,x_coord,y_coord)
 		return self.hist_data
 		
-	
-	def get_binned_data_stereographic_cpu(self,limits=((-1,1),(-1,1)),points=500): #project data stereographically onto xy plane and bin it
-		""" stereographically project measured ray endpoints and bin them on the CPU with NUMPY. Binning is done with points number of points within limits=((xmin,xmax),(ymin,ymax))."""
-		(pos,pwr) = self.get_measured_rays()
-		
-		pos0 = np.array(np.divide(pos,np.matrix(np.linalg.norm(pos,axis=1)).T))
-		
-		#stereographic projection
-		x  = np.array(pos0[:,0]/(1+pos0[:,2])).flatten()
-		y  = np.array(pos0[:,1]/(1+pos0[:,2])).flatten()
-		dx = np.float64(limits[0][1]-limits[0][0])/np.float64(points)
-		dy = np.float64(limits[1][1]-limits[1][0])/np.float64(points)
-		A  = 4.0 / (1.0 + x**2 + y**2 )**2 * dx*dy #correction factor for mapping distortion
-		
-		(H,x_coord,y_coord)=np.histogram2d(x=x,y=y,bins=points,range=limits,weights=(pwr.T/A).flatten())
-		self.hist_data = (H,x_coord,y_coord)
-		return self.hist_data
-
 	def plot_elevation_histogram(self,points=500,pole=[0,0,1,0]): 
 		""" collect only elevation of all rays and plot histogram of them."""
 		(pos,pwr) = self.get_measured_rays()
 		
 		pos0 = np.array(np.divide(pos,np.matrix(np.linalg.norm(pos,axis=1)).T))
+		pwr = np.float64(pwr).flatten()
 		elevation = np.arccos(np.dot(pos0,pole)).flatten()
-		pwr = pwr.flatten()
 		
 		#calculate 1D histogram over all elevations
 		import matplotlib.pyplot as plt
@@ -400,7 +382,8 @@ class CL_Tracer():
 		#(H,x)=np.histogram(elevation[idx],bins=points,weights=(pwr[idx].T/np.sin(elevation[idx])).flatten())
 		(H,x)=np.histogram(elevation,bins=points,weights=pwr)
 		x = (x[0:-1] + x[1:])/2.0
-		H = H/np.sin(x)
+		dx = x[1] - x[0]
+		H = H/(np.sin(x)*dx)
 		plt.plot(x*180.0/np.pi,H)
 		plt.title("Elevation Histogram")
 		plt.xlabel("Elevation")
@@ -413,6 +396,7 @@ class CL_Tracer():
 		(pos,pwr0) = self.get_measured_rays()
 		
 		pos0 = np.array(np.divide(pos,np.matrix(np.linalg.norm(pos,axis=1)).T))
+		pwr0 = np.float64(pwr0)
 		elevation0 = np.arccos(np.dot(pos0,pole))
 		SIDX = lambda s: sorted(range(len(s)), key=lambda k: s[k])
 		sort_idx = SIDX(elevation0)
@@ -437,6 +421,7 @@ class CL_Tracer():
 		(pos,pwr0) = self.get_measured_rays()
 		
 		pos0 = np.array(np.divide(pos,np.matrix(np.linalg.norm(pos,axis=1)).T))
+		pwr0 = np.float64(pwr0)
 		elevation0 = np.arccos(np.dot(pos0,pole))
 		elevation1 = elevation0
 		#idx = np.where(elevation0>1e-6)
@@ -485,12 +470,12 @@ class CL_Tracer():
 			
 		x=x_dev.get()
 		y=y_dev.get()
-		pwr=pwr_dev.get()
+		pwr=np.float64(pwr_dev.get())
 	
 		time2 = time()
 		dx = np.float64(limits[0][1]-limits[0][0])/np.float64(points)
 		dy = np.float64(limits[1][1]-limits[1][0])/np.float64(points)
-		pwr = pwr * dx * dy
+		pwr = pwr / (dx * dy)
 		
 		(H,x_coord,y_coord)=np.histogram2d(x=x.flatten(),y=y.flatten(),bins=points,range=limits,weights=pwr.flatten())
 		self.hist_data = (H,x_coord,y_coord)
@@ -521,7 +506,7 @@ class CL_Tracer():
 		time2 = time()
 		dx = np.float64(limits[0][1]-limits[0][0])/np.float64(points)
 		dy = np.float64(limits[1][1]-limits[1][0])/np.float64(points)
-		pwr = pwr * dx * dy
+		pwr = pwr / (dx * dy)
 		
 		(H,x_coord,y_coord)=np.histogram2d(x=x.flatten(),y=y.flatten(),bins=points,range=limits,weights=pwr.flatten())
 		self.hist_data = (H,x_coord,y_coord)
@@ -574,11 +559,11 @@ class CL_Tracer():
 			if k==0:
 				x=x_dev.get()
 				y=y_dev.get()
-				pwr=pwr_dev.get()
+				pwr=np.float64(pwr_dev.get())
 			else:
 				x =  np.concatenate((x,x_dev.get()),axis=0)
 				y =  np.concatenate((y,y_dev.get()),axis=0)
-				pwr =  np.concatenate((pwr,pwr_dev.get()),axis=0)
+				pwr =  np.concatenate((pwr,np.float64(pwr_dev.get())),axis=0)
 		time2 = time()
 		print "Rotating results:  ", time2-time1, "s"
 	
@@ -587,7 +572,7 @@ class CL_Tracer():
 		time1 = time()
 		dx = np.float64(limits[0][1]-limits[0][0])/np.float64(points)
 		dy = np.float64(limits[1][1]-limits[1][0])/np.float64(points)
-		pwr = pwr * dx * dy # final surface element scaling
+		pwr = pwr /(dx*dy) # final surface element scaling
 
 		# perform actual binning
 		(H,x_coord,y_coord)=np.histogram2d(x=x.flatten(),y=y.flatten(),bins=points,range=limits,weights=pwr.flatten())
@@ -635,7 +620,7 @@ class CL_Tracer():
 				(H,x_coord,y_coord)=np.histogram2d(x=np.array(pos[:,0].flatten()),
 								   y=np.array(pos[:,1].flatten()),
 								   bins=points,range=limits,normed=False,
-								   weights=np.array(pwr.flatten()))
+								   weights=np.array(np.float64(pwr).flatten()))
 				self.hist_data = (H.astype(np.float64),x_coord,y_coord)
 				efact = 1.0
 				
