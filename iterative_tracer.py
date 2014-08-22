@@ -66,6 +66,8 @@ class CL_Tracer():
 		f=open("kernel_reflect_refract_intersect.cl","r")
 		kernel_str = "".join(f.readlines())
 		f.close()
+		
+		# find out how to used "-cl-nv-verbose" in order to see global/local/private mem usage stats
 		self.prg = cl.Program(self.context, kernel_str).build()
 		 
 		## Step #7. Create a command queue for the target device.
@@ -112,6 +114,7 @@ class CL_Tracer():
 
 		rays_pow		= np.array(rays_power,dtype=np.float32) 
 		rays_meas		= np.zeros(ray_count).astype(np.int32)
+		rays_current_mid	= np.zeros(ray_count).astype(np.int32) - 2 #initial value -2 tell the tracer that the rays have been emitted and do not know in which (if any) mesh they are located
 				
 		#MESH does not change => only needs to be set up at start of tracer
 		mesh_count=np.int32(len(meshes))
@@ -164,6 +167,7 @@ class CL_Tracer():
 		m_refl_buf  = cl_array.to_device(self.queue,mesh_refl)
 		m_diss_buf  = cl_array.to_device(self.queue,mesh_diss)
 		
+		print m_diss_buf.get()		
 		# Get global memory size to estimate resource partitioning and calculate how many bytes are required for an additional ray.
 		sFloat  = 4
 		sFloat3 = sFloat * 4
@@ -212,12 +216,12 @@ class CL_Tracer():
 		rt_pow_buf	= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.float32) 
 		rt_meas_buf	= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.int32) 
 			
-		r_entering_buf 		= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.float32) 
-		r_isect_m_id_buf	= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.float32) 
-		r_isect_m_idx_buf 	= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.float32) 
+		r_entering_buf 		= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.int32) 
+		r_isect_m_id_buf	= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.int32) 
+		r_isect_m_idx_buf 	= cl_array.zeros(self.queue,(part_ray_count,1),dtype=np.int32) 
 
-		isects_count_buf 		= cl_array.zeros(self.queue,(part_ray_count,mesh_count),dtype=np.float32) 
-		ray_isect_mesh_idx_tmp_buf 	= cl_array.zeros(self.queue,(part_ray_count,mesh_count),dtype=np.float32) 
+		isects_count_buf 		= cl_array.zeros(self.queue,(part_ray_count,mesh_count),dtype=np.int32) 
+		ray_isect_mesh_idx_tmp_buf 	= cl_array.zeros(self.queue,(part_ray_count,mesh_count),dtype=np.int32) 
 				
 		# create results variable and iterate
 		self.results = []		
@@ -260,10 +264,11 @@ class CL_Tracer():
 				mf = cl.mem_flags
 				time1 = time()
 				# ray bufs
-				r_origin_buf 	= cl_array.to_device(self.queue,rays_origin[minidx:maxidx,:])	#needs copy
-				r_dir_buf 	= cl_array.to_device(self.queue,rays_dir[minidx:maxidx,:])	#needs copy
-				r_pow_buf 	= cl_array.to_device(self.queue,rays_pow[minidx:maxidx])	#needs copy
-				r_meas_buf	= cl_array.to_device(self.queue,rays_meas[minidx:maxidx])	#needs copy
+				r_origin_buf	 	= cl_array.to_device(self.queue,rays_origin[minidx:maxidx,:])	#needs copy
+				r_dir_buf 		= cl_array.to_device(self.queue,rays_dir[minidx:maxidx,:])	#needs copy
+				r_pow_buf 		= cl_array.to_device(self.queue,rays_pow[minidx:maxidx])	#needs copy
+				r_meas_buf		= cl_array.to_device(self.queue,rays_meas[minidx:maxidx])	#needs copy
+				r_origin_isect_m_id_buf	= cl_array.to_device(self.queue,rays_current_mid[minidx:maxidx])#needs copy
 			
 				#INTERSECT RAYS WITH SCENE
 				GIDs = (part_ray_count_this_iter,1) # max global ids set to number of input rays
@@ -284,7 +289,7 @@ class CL_Tracer():
 				print "Running intersect postprocessing kernel."
 				time1 = time()
 				event2 = self.prg.intersect_postproc(self.queue, GIDs, None, r_origin_buf.data,
-					r_dir_buf.data,r_dest_buf.data,r_entering_buf.data,
+					r_dir_buf.data,r_dest_buf.data,r_origin_isect_m_id_buf.data,r_entering_buf.data,
 					r_isect_m_id_buf.data,r_isect_m_idx_buf.data,
 					m_v0_buf.data,m_v1_buf.data,m_v2_buf.data,m_id_buf.data,
 					isect_min_ray_len_buf.data,isects_count_buf.data,
@@ -297,8 +302,9 @@ class CL_Tracer():
 				# REFLECT AND REFRACT INTERSECTED RAYS
 				print "Running Fresnell kernel."
 				time1 = time()
-				event3 = self.prg.reflect_refract_rays(self.queue, GIDs, None, r_dest_buf.data,
+				event3 = self.prg.reflect_refract_rays(self.queue, GIDs, None, r_origin_buf.data, r_dest_buf.data,
 					r_dir_buf.data, r_pow_buf.data, r_meas_buf.data, r_entering_buf.data, 
+					r_origin_isect_m_id_buf.data,
 					rr_origin_buf.data, rr_dir_buf.data, rr_pow_buf.data, rr_meas_buf.data,
 					rt_origin_buf.data, rt_dir_buf.data, rt_pow_buf.data, rt_meas_buf.data,
 					r_isect_m_id_buf.data, r_isect_m_idx_buf.data, m_v0_buf.data, m_v1_buf.data,
@@ -322,9 +328,14 @@ class CL_Tracer():
 				trays_meas[minidx:maxidx]		= rt_meas_buf.get(self.queue).flatten()[0:part_ray_count_this_iter]
 				trays_pow[minidx:maxidx]		= rt_pow_buf.get(self.queue).flatten()[0:part_ray_count_this_iter]
 				
+				print rays_current_mid[minidx:maxidx]
+				rays_current_mid[minidx:maxidx] = r_isect_m_id_buf.get(self.queue).flatten()[0:part_ray_count_this_iter]
+				print rays_current_mid[minidx:maxidx]
+				
 				rays_dest[minidx:maxidx,:] 	= r_dest_buf.get(self.queue)[0:part_ray_count_this_iter,:]
 				rays_pow[minidx:maxidx]  	= r_pow_buf.get(self.queue)[0:part_ray_count_this_iter]
 				rays_meas[minidx:maxidx] 	= r_meas_buf.get(self.queue).flatten()[0:part_ray_count_this_iter]
+				
 				time2 = time()
 				print "Fetching results took          ", time2 - time1, "s."
 				
@@ -346,6 +357,9 @@ class CL_Tracer():
 			rays_dir    = np.append(rrays_dir,trays_dir,axis=0).astype(np.float32)[idx]
 			rays_pow    = np.append(rrays_pow,trays_pow,axis=0).astype(np.float32)[idx]
 			rays_meas   = np.append(rrays_meas,trays_meas,axis=0).astype(np.int32)[idx]
+
+			rays_current_mid   = np.append(rays_current_mid,rays_current_mid,axis=0).astype(np.int32)[idx]
+			
 			ray_count   = np.int32(len(rays_origin))
 		
 			if ray_count == 0:

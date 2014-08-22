@@ -95,13 +95,15 @@ hemisphere.setMaterial(mat_type="measure")
 
 The *center* of the hemisphere is placed at [0,0,0] and its *radius* is 500. To define it as a measuring surface, the *setMaterial* method is called with *mat_type="measure"*. A termination surface would *mat_type="terminator"*. 
 
-Typical materials would be of *mat_type="refractive"* with a floating point *IOR* or of *mat_type="mirror"* with a *reflectivity* value and would be set up like this
+Typical materials would be of *mat_type="refractive"* with a floating point *IOR* and *dissipation* or of *mat_type="mirror"* with a *reflectivity* value and would be set up like this
 
 ```
 cube = oe.cube(center=(0,0,-0.01,0),size=[100,100,10,0])
-cube.setMaterial(mat_type="refractive",IOR=1.5)
+cube.setMaterial(mat_type="refractive",IOR=1.5, dissipation=0.01)
 cube.setMaterial(mat_type="mirror",reflectivity=0.98)
 ```
+
+Note that dissipation is to be given in the base length unit you decide to use in the simulation. In LightPyCL length has no unit, therefore you can decide to make a length of 1 to be 1 cm. In the case that a length of 1 is 1 cm you would have to give your dissipation in 1/cm.
 
 To create a parabolic mirror with a focal point *focus* at [0,0,0] and a *focal_length* of 5 and a dish *diameter* of 20, *oe.parabolic_mirror* can be used as follows
 
@@ -118,7 +120,7 @@ Note that *translate* performs only a relative displacement of the mesh.
 
 Finally, after generating and positioning the optical elements, they must be assembled into a *scene* for the raytracer
 
-`scene = [hemisphere, parabolic_mirror]`
+`scene = [hemisphere, parabolic_mirror, cube]`
 
 The raytracer then converts all the meshes into a geometry buffer that is sent to the CL device.
 

@@ -102,7 +102,10 @@ int intersect_triangle(float3 O, float3 D,
 
 // postprocess intersect intermediate results. intersect code only colects closest intersect for every mesh. but which is the closest and is the ray entering or leaving it? where is the rays destination?
 // those questions are answered here.
-__kernel void intersect_postproc( __global const float3 *rays_origin, __global const float3 *rays_dir, __global float3 *rays_dest, __global int *ray_entering, __global int *ray_isect_mesh_id, __global int *ray_isect_mesh_idx, __global const float3 *mesh_v0, __global const float3 *mesh_v1, __global const float3 *mesh_v2, __global const int *mesh_id, __global float *isect_min_ray_len, __global int *isects_count, __global int *ray_isect_mesh_idx_tmp, int mesh_count, int ray_count, float max_ray_len)                     
+__kernel void intersect_postproc( __global const float3 *rays_origin, __global const float3 *rays_dir, __global float3 *rays_dest, __global int *rays_origin_isect_mesh_id,
+		__global int *ray_entering, __global int *ray_isect_mesh_id, __global int *ray_isect_mesh_idx, __global const float3 *mesh_v0, 
+		__global const float3 *mesh_v1, __global const float3 *mesh_v2, __global const int *mesh_id, __global float *isect_min_ray_len, 
+		__global int *isects_count, __global int *ray_isect_mesh_idx_tmp, int mesh_count, int ray_count, float max_ray_len)                     
 {
 	//process results to calculate rays_dest and ray_entering
 	int rid = get_global_id(0);	//ray index for parallel postprocessing
@@ -110,6 +113,11 @@ __kernel void intersect_postproc( __global const float3 *rays_origin, __global c
 	int isect_mesh_id_tmp = -1;	//id of closest intersection
 	int isect_mesh_idx_tmp = -1;	//index of closest intersected triangle
 	float t_min = max_ray_len;	//intersection distance buffer
+
+	int orig_isect_m_id    = rays_origin_isect_mesh_id[rid]; //mesh id of previous intersection and defines material from which ray is entering
+								 // -2 means not initialized with material yet
+								 // -1 means located outside any mesh
+								 // >=0 means ray is in mesh with specific id given by the >=0 number
 
 	//iterate over all meshes (not triangles) to find closest intersected mesh.	
 	for(int j=0; j<mesh_count; j++){
@@ -130,10 +138,20 @@ __kernel void intersect_postproc( __global const float3 *rays_origin, __global c
 	// if at least one intersect exists (at least one mesh id crossed) then figure out if the ray is entering or exiting the mesh.
 	// an even number or intersects with a closed mesh (solid) means the ray is entering
 	// an odd number means the opposite ;)
+	int entering = 0;
 	if(isect_mesh_id_tmp>=0){
-		ray_entering[rid] = 1-(isects_count[mesh_count*rid+isect_mesh_id_tmp] % 2); 
+		entering = 1-(isects_count[mesh_count*rid+isect_mesh_id_tmp] % 2);
+		ray_entering[rid] = entering; 
+
+		if(orig_isect_m_id ==-2) // rays fresh from source need to know what they are in.
+		{	if(entering == 0) //case for which ray has been emitted from source but is within a mesh already. this means the origin material is the material the ray is in.
+			{	rays_origin_isect_mesh_id[rid] = isect_mesh_id_tmp;
+			}
+			else //entering material for the first time.
+			{	rays_origin_isect_mesh_id[rid] = -1; // ray originated from outside any mesh
+			}
+		}
 	}
-	
 }
 
 //intersect rays in parallel
@@ -239,8 +257,9 @@ int reflect_refract(float3 in_ray_dest, float3 in_ray_dir, float in_ray_power,
 }
 
 // reflect and refract rays while checking if the ray should be terminated or measured and sets result buffers accordingly.
-__kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __global const float3 *in_rays_dir, 
-		__global const float *in_rays_power, __global int *in_rays_measured, __global const int *in_ray_entering,
+__kernel void reflect_refract_rays( __global const float3 *in_rays_origin, __global const float3 *in_rays_dest, __global const float3 *in_rays_dir, 
+		__global float *in_rays_power, __global int *in_rays_measured, __global const int *in_ray_entering,
+		__global int *rays_origin_isect_mesh_id,
 		__global float3 *rays_reflect_origin, __global float3 *rays_reflect_dir, 
 		__global float *rays_reflect_power, __global int *rays_reflect_measured, 
 		__global float3 *rays_refract_origin, __global float3 *rays_refract_dir, 
@@ -249,23 +268,45 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 		__global const float3 *mesh_v0, __global const float3 *mesh_v1, __global const float3 *mesh_v2, 
 		__global const int *mesh_id, __global const int *mesh_mat_type, __global const float *mesh_ior,
 		__global const float *mesh_refl, __global const float *mesh_diss, float IOR_env, int mesh_count, int ray_count, float max_ray_len)                     
-{	int rid = get_global_id(0);
+{	const float EPSILON 	= 0.000001;	
+	int rid = get_global_id(0);
 	int rmid = ray_isect_mesh_id[rid];
 	
 	//Default values to terminate ray. because nothing was hit.
 	int   mesh_mat = 2; // type of mesh material. 0 refractive, 1 mirror, 2 terminate, 3 measure and 4 anisotropic refractive
 	float IOR_mesh = 1.0; 	
 	float R_mesh   = 0.0;
-	float D_mesh   = 0.0;
+	//float D_mesh   = 0.0;
 	
 	// if ray was intersected then get values from mesh material parameters
 	if(rmid >= 0)
 	{	mesh_mat = mesh_mat_type[rmid];
 		IOR_mesh = mesh_ior[rmid]; 	
 		R_mesh   = mesh_refl[rmid];
-		D_mesh   = mesh_diss[rmid];
+		//D_mesh   = mesh_diss[rmid];
 	}
-	
+
+	// calculate dissipation and determine IOR of material the ray is impinging from
+	int r_orig_mid = rays_origin_isect_mesh_id[rid];
+	float IOR_in_ray = IOR_env;
+	float in_ray_pow = in_rays_power[rid];
+	float3 in_ray_dest = in_rays_dest[rid];
+	//printf("id %d\n",r_orig_mid);
+	if( r_orig_mid >= 0)
+	{	IOR_in_ray = mesh_ior[r_orig_mid];
+		
+		//if material in which input ray was dissipative then modify inray power
+		if(mesh_mat_type[r_orig_mid] == 0 && mesh_diss[r_orig_mid] > EPSILON)
+		{	float ray_len = length(in_ray_dest - in_rays_origin[rid]);
+			in_ray_pow = in_ray_pow * exp(-mesh_diss[r_orig_mid]*ray_len);
+			in_rays_power[rid] = in_ray_pow;
+		}
+	}
+	else
+	{	IOR_in_ray = IOR_env;
+		
+	}	
+
 	//if ray_isect_mesh_idx == -1 then no intersects exist and ray can also be terminated
 	//if ray has not been terminated by measurement or termination sruface => generate reflect and refract beams.
 	int irm = in_rays_measured[rid]; 
@@ -273,6 +314,7 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 	if(irm==0 && rmid >= 0 && (mesh_mat == 0 || mesh_mat == 1)){
 		float n1;
 		float n2;
+		
 		if(ire==1){
 			n1 = IOR_env;
 			n2 = IOR_mesh;
@@ -298,7 +340,7 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 		int r_refract_measured;
 		
 		
-		reflect_refract(in_rays_dest[rid], in_rays_dir[rid], in_rays_power[rid], 
+		reflect_refract(in_ray_dest, in_rays_dir[rid], in_ray_pow, 
 			&r_reflect_origin, &r_reflect_dir, &r_reflect_power, &r_reflect_measured,
 			&r_refract_origin, &r_refract_dir, &r_refract_power, &r_refract_measured,
 			surf_normal, n1, n2);
@@ -317,7 +359,7 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 		else // mirror material
 		{	rays_reflect_origin[rid]	= r_reflect_origin;
 			rays_reflect_dir[rid]		= r_reflect_dir;
-			rays_reflect_power[rid]		= in_rays_power[rid] * R_mesh; // Mirror Losses
+			rays_reflect_power[rid]		= in_ray_pow * R_mesh; // Mirror Losses
 			rays_reflect_measured[rid]	= r_reflect_measured;
 			
 			rays_refract_origin[rid]	= r_refract_origin;
@@ -327,6 +369,7 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 
 		
 		}
+		
 	}
 	else{ //if rays go nowhere, were measured or terminated the reflected and refracted rays need not be calculated but need termination.
 		rays_reflect_origin[rid]	= in_rays_dest[rid];
