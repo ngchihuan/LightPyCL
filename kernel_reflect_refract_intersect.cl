@@ -247,21 +247,30 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 		__global float *rays_refract_power, __global int *rays_refract_measured, 
 		__global int *ray_isect_mesh_id, __global int *ray_isect_mesh_idx, 
 		__global const float3 *mesh_v0, __global const float3 *mesh_v1, __global const float3 *mesh_v2, 
-		__global const int *mesh_id, __global const float *mesh_IORs, float IOR_env, int mesh_count, int ray_count, float max_ray_len)                     
+		__global const int *mesh_id, __global const int *mesh_mat_type, __global const float *mesh_ior,
+		__global const float *mesh_refl, __global const float *mesh_diss, float IOR_env, int mesh_count, int ray_count, float max_ray_len)                     
 {	int rid = get_global_id(0);
 	int rmid = ray_isect_mesh_id[rid];
-	//int rimi = ray_isect_mesh_idx[rid];
-	float IOR_mesh = mesh_IORs[rmid]; 	// IOR <=-1    ... Terminate beam (-1 will be set for termination)
-				    		// -1<IOR<1    ... Measure beam
-				    		//        1    ... Air
-				    		//       >1    ... typical refractive material
-				    		//       >1000 ... indicates mirror. reflectivity is encoded after the comma.
-				    		//		   ex. IOR=1000.98 => mirror with 0.98 reflectivity
+	
+	//Default values to terminate ray. because nothing was hit.
+	int   mesh_mat = 2; // type of mesh material. 0 refractive, 1 mirror, 2 terminate, 3 measure and 4 anisotropic refractive
+	float IOR_mesh = 1.0; 	
+	float R_mesh   = 0.0;
+	float D_mesh   = 0.0;
+	
+	// if ray was intersected then get values from mesh material parameters
+	if(rmid >= 0)
+	{	mesh_mat = mesh_mat_type[rmid];
+		IOR_mesh = mesh_ior[rmid]; 	
+		R_mesh   = mesh_refl[rmid];
+		D_mesh   = mesh_diss[rmid];
+	}
+	
 	//if ray_isect_mesh_idx == -1 then no intersects exist and ray can also be terminated
 	//if ray has not been terminated by measurement or termination sruface => generate reflect and refract beams.
 	int irm = in_rays_measured[rid]; 
 	int ire = in_ray_entering[rid];
-	if(irm==0 && rmid >= 0 && IOR_mesh >= 1.0){
+	if(irm==0 && rmid >= 0 && (mesh_mat == 0 || mesh_mat == 1)){
 		float n1;
 		float n2;
 		if(ire==1){
@@ -294,7 +303,7 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 			&r_refract_origin, &r_refract_dir, &r_refract_power, &r_refract_measured,
 			surf_normal, n1, n2);
 		
-		if(IOR_mesh < 1000.0) // not a mirror
+		if(mesh_mat == 0) // not a mirror
 		{	rays_reflect_origin[rid]	= r_reflect_origin;
 			rays_reflect_dir[rid]		= r_reflect_dir;
 			rays_reflect_power[rid]		= r_reflect_power;
@@ -308,7 +317,7 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 		else // mirror material
 		{	rays_reflect_origin[rid]	= r_reflect_origin;
 			rays_reflect_dir[rid]		= r_reflect_dir;
-			rays_reflect_power[rid]		= in_rays_power[rid] * (IOR_mesh - floor(IOR_mesh)); // Mirror Losses
+			rays_reflect_power[rid]		= in_rays_power[rid] * R_mesh; // Mirror Losses
 			rays_reflect_measured[rid]	= r_reflect_measured;
 			
 			rays_refract_origin[rid]	= r_refract_origin;
@@ -330,10 +339,10 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_dest, __globa
 		rays_refract_power[rid]		= 0.0;
 		rays_refract_measured[rid]	= -1;
 
-		if(IOR_mesh<=-1.0 || rmid < 0){ //beam hit termination surface or goes nowhere
+		if(mesh_mat == 2 || rmid < 0){ //beam hit termination surface or goes nowhere
 			in_rays_measured[rid] = -1;
 		}
-		if(IOR_mesh>-1.0 && IOR_mesh < 1.0 && rmid >=0 ){ // beam hit measurement surface
+		if(mesh_mat == 3 && rmid >=0 ){ // beam hit measurement surface
 			in_rays_measured[rid] = 1;
 		}
 	}

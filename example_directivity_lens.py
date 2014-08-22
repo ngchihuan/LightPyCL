@@ -58,8 +58,11 @@ oe = goe.optical_elements()
 ior_env = np.float32(1.0)
 
 # setup a hemisphere to measure the lightsources spatial power distribution
-meshes = [oe.hemisphere(center=[0,0,0,0],radius=1000.0,IOR=0.0)] 
-m2 = oe.lens_spherical_biconcave(focus=(0,0,0),r1=60.,r2=6000.,diameter=50.0,IOR=2.5)
+measureSurf = oe.hemisphere(center=[0,0,0,0],radius=1000.0)
+measureSurf.setMaterial(mat_type="measure")
+meshes = [measureSurf]
+
+m2 = oe.lens_spherical_biconcave(focus=(0,0,0),r1=60.,r2=6000.,diameter=50.0,IOR=2.5) #NOTE: lens_spherical_biconcave initializes material settings with IOR parameter
 m2.rotate(axis="y",angle=-np.pi/2.0,pivot = (0,0,0,0))
 meshes.append(m2)
 

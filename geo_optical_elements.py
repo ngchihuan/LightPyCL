@@ -26,13 +26,44 @@ class GeoObject():
 	This cass also privides conversion methods required by the tracer kernel and dxf output."""
 	verticies=None
 	triangles=None
-	IOR = None
+	IOR = 1.0
+	reflectivity = 1.0
+	dissipation  = 0.0 	#in 1/m
+	AR_IOR       = 1.0 	# not in use yet
+	AR_thickness = 0.0 	# not in use yet
+	anisotropy   = None 	# not in use yet
+	
+	matTypes = {"refractive":0, "mirror":1, "terminator":2, "measure":3, "refractive_anisotropic":4}
+	matType = "refractive"
+	
 
-	def __init__(self,verts,tris, ior):
+	def __init__(self,verts,tris, mat_type="refractive", IOR=1.0, reflectivity = 1.0, dissipation = 0.0, AR_IOR=1.0, AR_thickness=0.0, anisotropy = None):
 		self.verticies = verts
 		self.triangles = tris
-		self.IOR = ior
+		self.setMaterial(mat_type,IOR, reflectivity, dissipation, AR_IOR, AR_thickness, anisotropy)
+	
+	def setMaterial(self,mat_type="refractive", IOR=1.0, reflectivity = 1.0, dissipation = 0.0, AR_IOR=1.0, AR_thickness=0.0, anisotropy = None):
+		if mat_type in self.matTypes:
+			self.matType = mat_type
+		else:
+			default = "refractive"
+			self.matType = default
+			print "Warning: material", mat, "unknown. Setting material as ", default
 
+		if self.matType == "refractive":
+			self.IOR = IOR
+			self.dissipation = dissipation
+			self.AR_IOR = AR_IOR
+			self.AR_thickness = AR_thickness
+		elif self.matType == "refractive":
+			self.reflectivity = reflectivity
+		elif self.matType == "refractive_anisotropic":
+			print "Warning: anisotropic materials are not yet supported."
+		
+	def getMaterialBuf(self):
+		""" returns a list of material parameters for the tracer code"""
+		return {"type":self.matTypes.get(self.matType), "IOR":self.IOR, "R":self.reflectivity, "dissipation":self.dissipation}
+	
 	def translate(self,vec):
 		self.verticies = self.verticies + np.array(vec)
 	
@@ -98,7 +129,7 @@ class GeoObject():
 class optical_elements():
 	""" The optical_elements class provides generator methods that create mesh objects from basic parametrs of the corresponding optical elements.
 	optical element generators return a GeoObject with verticies triangle indicies and index of refraction properties."""
-	def cube(self, center, size, IOR):
+	def cube(self, center, size):
 		verts = np.array(	[[-1,-1,-1,0],
 					 [ 1,-1,-1,0],
 					 [-1, 1,-1,0],
@@ -114,10 +145,10 @@ class optical_elements():
 			     [2,3,6],[6,7,3], #front
 			     [0,2,4],[4,6,2], #left
 			     [1,3,5],[5,7,3]] #right
-		mesh = GeoObject(verts,triangles, IOR)
+		mesh = GeoObject(verts,triangles)
 		return mesh
 
-	def sphere(self,center,radius,IOR):
+	def sphere(self,center,radius):
 		N=72
 		phi = np.linspace(0.0,2.0*np.pi,N)
 		x = np.cos(phi)*radius
@@ -127,12 +158,11 @@ class optical_elements():
 		for (a,b) in zip(x,y):
 			xy.append([a,b])
 			
-		#curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,lens_type,IOR)
-		mesh = self.revolve_curve(xy, axis="x", ang=np.pi, ang_pts=N+1, IOR=IOR)
+		mesh = self.revolve_curve(xy, axis="x", ang=np.pi, ang_pts=N+1)
 		mesh.translate(center)
 		return mesh
 		
-	def hemisphere(self,center,radius,IOR):
+	def hemisphere(self,center,radius):
 		N=72
 		phi = np.linspace(0.0,np.pi,N)
 		x = np.cos(phi)*radius
@@ -142,8 +172,7 @@ class optical_elements():
 		for (a,b) in zip(x,y):
 			xy.append([a,b])
 			
-		#curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,lens_type,IOR)
-		mesh = self.revolve_curve(xy, axis="x", ang=np.pi, ang_pts=N+1, IOR=IOR)
+		mesh = self.revolve_curve(xy, axis="x", ang=np.pi, ang_pts=N+1)
 		mesh.translate(center)
 		return mesh
 	
@@ -160,11 +189,11 @@ class optical_elements():
 		for (a,b) in zip(x,y):
 			xy.append([a,b])
 			
-		#curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,lens_type,IOR)
-		mesh = self.revolve_curve(xy, axis="x", ang=2.*np.pi, ang_pts=N+1, IOR=1000.0 + reflectivity)
+		mesh = self.revolve_curve(xy, axis="x", ang=2.*np.pi, ang_pts=N+1)
+		mesh.setMaterial(mat_type="mirror",reflectivity=reflectivity)
 		return mesh
 
-	def topless_cylinder(self,center=(0,0,0),diameter=20.0,height=10.0,IOR=0.0):
+	def topless_cylinder(self,center=(0,0,0),diameter=20.0,height=10.0):
 		N=72
 		x = np.array([ 0.0, 0.0, 1.0]) * height   + center[1]
 		y = np.array([ 0.0,  .5,  .5]) * diameter + center[0]
@@ -173,11 +202,10 @@ class optical_elements():
 		for (a,b) in zip(x,y):
 			xy.append([a,b])
 			
-		#curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,lens_type,IOR)
-		mesh = self.revolve_curve(xy, axis="x", ang=2.*np.pi, ang_pts=N+1, IOR=IOR)
+		mesh = self.revolve_curve(xy, axis="x", ang=2.*np.pi, ang_pts=N+1)
 		return mesh
 		
-	def revolve_curve(self, curve, axis="x", ang=2*np.pi, ang_pts=36, IOR=1):
+	def revolve_curve(self, curve, axis="x", ang=2*np.pi, ang_pts=36):
 		# curve		list of (x,y) tuples
 		# axis		x or y axis
 		# ang		angle to revolve (pi for half circle incase of symmetrical curve)
@@ -220,12 +248,13 @@ class optical_elements():
 				tris.append([2,3,1]+i*4+4*k*(len(curve3d)-1))
 			k+=1
 				
-		return GeoObject(verts,tris, IOR)
+		return GeoObject(verts,tris)
 			
 	def lens_spherical_biconcave(self,focus,r1,r2,diameter,IOR):
-		#(curve2d,f0,d0) = self.curve_lens_spherical_biconcave(focus,r1,r2,d,diameter,axis,lens_type,IOR)
 		curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,1,IOR)
-		return self.revolve_curve(curve2d, axis="x", ang=np.pi, ang_pts=36, IOR=IOR)
+		mesh = self.revolve_curve(curve2d, axis="x", ang=np.pi, ang_pts=36)
+		mesh.setMaterial(mat_type="refractive",IOR=IOR)
+		return mesh
 		
 	
 	def curve_lens_spherical_biconcave(self,focus,r1,r2,d,diameter,axis,IOR):
@@ -367,4 +396,4 @@ if __name__ == '__main__':
 	oe = optical_elements()
 	m_l= oe.parabolic_mirror(focus=(0,0,0),focal_length=5.0,diameter=20.0,reflectivity = 0.98)  
 	m_l.rotate(axis="y",angle=-np.pi/2,pivot = (0,0,0,0))
-	m_l.write_dxf("./lens.dxf")
+	m_l.write_dxf("./parabolic_mirror.dxf")

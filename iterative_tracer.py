@@ -115,12 +115,21 @@ class CL_Tracer():
 				
 		#MESH does not change => only needs to be set up at start of tracer
 		mesh_count=np.int32(len(meshes))
-		mesh_mat = np.zeros(mesh_count,dtype=np.float32)
+		mesh_mat_type 	= np.zeros(mesh_count,dtype=np.int32)
+		mesh_ior	= np.zeros(mesh_count,dtype=np.float32)
+		mesh_refl	= np.zeros(mesh_count,dtype=np.float32)
+		mesh_diss	= np.zeros(mesh_count,dtype=np.float32)
 		
 		# convert meshes to linear buffer with mesh id for tracer to be able to iterate over
 		j=0
 		for mesh in meshes:	
-			mesh_mat[j] = np.float32(mesh.IOR)
+			mesh_mat = mesh.getMaterialBuf() # np.float32(mesh.IOR)
+						
+			mesh_mat_type[j] = np.int32(mesh_mat.get("type"))
+			mesh_ior[j]	 = np.float32(mesh_mat.get("IOR"))
+			mesh_refl[j]	 = np.float32(mesh_mat.get("R"))
+			mesh_diss[j]	 = np.float32(mesh_mat.get("dissipation"))
+			
 			tribuf = mesh.tribuf()
 			m_id_tmp = np.zeros(len(tribuf[0]),dtype=np.int32)+j
 
@@ -149,7 +158,11 @@ class CL_Tracer():
 		m_v1_buf   = cl_array.to_device(self.queue,m_v1)
 		m_v2_buf   = cl_array.to_device(self.queue,m_v2)
 		m_id_buf   = cl_array.to_device(self.queue,m_id)
-		m_iors_buf = cl_array.to_device(self.queue,mesh_mat)
+		
+		m_typ_buf   = cl_array.to_device(self.queue,mesh_mat_type)
+		m_ior_buf   = cl_array.to_device(self.queue,mesh_ior)
+		m_refl_buf  = cl_array.to_device(self.queue,mesh_refl)
+		m_diss_buf  = cl_array.to_device(self.queue,mesh_diss)
 		
 		# Get global memory size to estimate resource partitioning and calculate how many bytes are required for an additional ray.
 		sFloat  = 4
@@ -288,8 +301,9 @@ class CL_Tracer():
 					r_dir_buf.data, r_pow_buf.data, r_meas_buf.data, r_entering_buf.data, 
 					rr_origin_buf.data, rr_dir_buf.data, rr_pow_buf.data, rr_meas_buf.data,
 					rt_origin_buf.data, rt_dir_buf.data, rt_pow_buf.data, rt_meas_buf.data,
-					r_isect_m_id_buf.data,r_isect_m_idx_buf.data,m_v0_buf.data,m_v1_buf.data,
-					m_v2_buf.data,m_id_buf.data, m_iors_buf.data, ior_env, mesh_count,ray_count,max_ray_len)
+					r_isect_m_id_buf.data, r_isect_m_idx_buf.data, m_v0_buf.data, m_v1_buf.data,
+					m_v2_buf.data, m_id_buf.data, m_typ_buf.data, m_ior_buf.data, m_refl_buf.data,
+					m_diss_buf.data , ior_env, mesh_count, ray_count, max_ray_len)
 				event3.wait()
 				time2 = time()
 				t_fresnell = time2 -time1
@@ -386,7 +400,7 @@ class CL_Tracer():
 		H = H/(np.sin(x)*dx)
 		plt.plot(x*180.0/np.pi,H)
 		plt.title("Elevation Histogram")
-		plt.xlabel("Elevation")
+		plt.xlabel("Elevation (Deg)")
 		plt.ylabel("Intensity")
 		pylab.savefig("./elevation_power_distribution.pdf")
 		plt.show()
@@ -594,7 +608,6 @@ class CL_Tracer():
 			fig = plt.figure()
 			ax = fig.gca(projection='3d')
 			X, Y = np.meshgrid(xedges[0:-1], yedges[0:-1])
-			#print X.shape, Y.shape, H.shape
 			surf = ax.plot_surface(X, Y, H, rstride=1, cstride=1, cmap=cm.coolwarm, linewidth=0, antialiased=False)
         		#ax.set_zlim(-1,1)
         		ax.zaxis.set_major_locator(LinearLocator(10))

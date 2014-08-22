@@ -62,10 +62,12 @@ oe = goe.optical_elements()
 ior_env = np.float32(1.0)
 
 # setup a hemisphere to measure the lightsources spatial power distribution
-meshes = [oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)] 
+measureSurf = oe.hemisphere(center=[0,0,0,0],radius=500.0)
+measureSurf.setMaterial(mat_type="measure")
+meshes = [measureSurf]
+
 m2 = oe.parabolic_mirror(focus=(0,0,0),focal_length=5.0,diameter=20.0,reflectivity = 0.98)  
-#NOTE: for now reflectivity is encoded into the IOR value in order to keep the raytracer kernel simple.
-# the IOR seen by the raytracer is (1000 + R). If you need IOR values > 1000 adjust kernel code to something larger.
+#NOTE: parabolic_mirror initializes material parameters as the name says mirror.
 
 #rotate parabolic mirror to face in z direction
 m2.rotate(axis="y",angle=-np.pi/2,pivot = (0,0,0,0))
@@ -108,6 +110,8 @@ nf=2.0
 m_surf_extent=((-np.pi/nf,np.pi/nf),(-np.pi/nf,np.pi/nf))
 #spatial resolution of binning
 m_points=100 
+tr.get_beam_width_half_power(points=m_points,pole=[0,0,1,0])
+tr.get_beam_HWHM(points=m_points,pole=[0,0,1,0])
 tr.plot_binned_data(limits=m_surf_extent,points=m_points,use_angular=True,use_3d=True)
 tr.plot_elevation_histogram(points=90,pole=[0,0,1,0])
 
