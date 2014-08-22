@@ -88,15 +88,24 @@ With *oe* we can currently generate primitives such as cubes, spheres, hemispher
 
 To create a hemisphere intended to measure a directional pattern of our light sources, *oe.hemisphere* is called
  
-`hemisphere = oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)`
+```
+hemisphere = oe.hemisphere(center=[0,0,0,0],radius=500.0,IOR=0.0)
+hemisphere.setMaterial(mat_type="measure")
+```
 
-The *center* of the hemisphere is placed at [0,0,0] and its *radius* is 500. To define it as a measuring surface, it is assigned an *IOR* (index of refraction) of 0.0. A termination surface would have an *IOR* of -1.0 and typical materials would be assigned an *IOR* > 1.0. Note that currently *IOR* values cannot be greater than 1000.
+The *center* of the hemisphere is placed at [0,0,0] and its *radius* is 500. To define it as a measuring surface, the *setMaterial* method is called with *mat_type="measure"*. A termination surface would *mat_type="terminator"*. 
+
+Typical materials would be of *mat_type="refractive"* with a floating point *IOR* or of *mat_type="mirror"* with a *reflectivity* value and would be set up like this
+
+```
+cube = oe.cube(center=(0,0,-0.01,0),size=[100,100,10,0])
+cube.setMaterial(mat_type="refractive",IOR=1.5)
+cube.setMaterial(mat_type="mirror",reflectivity=0.98)
+```
 
 To create a parabolic mirror with a focal point *focus* at [0,0,0] and a *focal_length* of 5 and a dish *diameter* of 20, *oe.parabolic_mirror* can be used as follows
 
 `parabolic_mirror = oe.parabolic_mirror(focus=[0,0,0],focal_length=5.0,diameter=20.0,reflectivity = 0.98)`
-
-Note that the *reflectivity* is encoded in the *IOR* value of the *GeoObject* in order to keep the raytracer code simple. This is also the reason why *IOR* > 1000 is not permitted for refractive materials, as an *IOR* = 1000.98 would mean "mirror with reflectivity of 98%" to the raytracer.
 
 Optical elements can be moved and rotated as follows:
 
