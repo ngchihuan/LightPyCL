@@ -328,9 +328,7 @@ class CL_Tracer():
 				trays_meas[minidx:maxidx]		= rt_meas_buf.get(self.queue).flatten()[0:part_ray_count_this_iter]
 				trays_pow[minidx:maxidx]		= rt_pow_buf.get(self.queue).flatten()[0:part_ray_count_this_iter]
 				
-				print rays_current_mid[minidx:maxidx]
 				rays_current_mid[minidx:maxidx] = r_isect_m_id_buf.get(self.queue).flatten()[0:part_ray_count_this_iter]
-				print rays_current_mid[minidx:maxidx]
 				
 				rays_dest[minidx:maxidx,:] 	= r_dest_buf.get(self.queue)[0:part_ray_count_this_iter,:]
 				rays_pow[minidx:maxidx]  	= r_pow_buf.get(self.queue)[0:part_ray_count_this_iter]

@@ -38,7 +38,7 @@ os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 time1 = time()
 
 # Amount of rays to trace
-ray_count=30000
+ray_count=300000
 # Amount of iterations to run the tracer. defines the depth rays are followed to.
 iterations = 4
 
@@ -63,7 +63,7 @@ measureSurf.setMaterial(mat_type="measure")
 meshes = [measureSurf]
 
 m2 = oe.cube(center=(0,0,20,0),size=[10,10,10,0])
-m2.setMaterial(mat_type="refractive",IOR=1.0, dissipation=1000.0)
+m2.setMaterial(mat_type="refractive",IOR=1.0, dissipation=.001)
 meshes.append(m2)
 
 
