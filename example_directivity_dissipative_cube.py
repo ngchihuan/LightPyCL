@@ -38,13 +38,13 @@ os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 time1 = time()
 
 # Amount of rays to trace
-ray_count=300000
+ray_count=30000
 # Amount of iterations to run the tracer. defines the depth rays are followed to.
 iterations = 4
 
 
 # create one lightsource
-ls0 = light_source.light_source(center=np.array([0,0,0,0],dtype=np.float32), direction=(0,0,1), directivity=lambda x,y: 1.0+0.0*np.cos(y), power=1000., ray_count=ray_count)
+ls0 = light_source.light_source(center=np.array([0,0,0,0],dtype=np.float32), direction=(0,0,1), directivity=lambda x,y: np.cos(y), power=1000., ray_count=ray_count)
 # tracer code expects a list of light sources
 ls = [ls0] 
 
@@ -63,7 +63,7 @@ measureSurf.setMaterial(mat_type="measure")
 meshes = [measureSurf]
 
 m2 = oe.cube(center=(0,0,20,0),size=[10,10,10,0])
-m2.setMaterial(mat_type="refractive",IOR=1.0, dissipation=.001)
+m2.setMaterial(mat_type="refractive",IOR=1.0, dissipation=1.0)
 meshes.append(m2)
 
 
