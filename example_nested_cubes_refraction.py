@@ -23,6 +23,7 @@
 #	- demonstrates nested worst case placement with overlaping surfaces
 #		NOTE: meshes with partially overlaping volumes should be avoided as the material assignment in the overlapping region is ambiguous. 
 #			is n1 or n2 vaid in overlap? For the tracer this would then depend on impinging direction due to material hirarchy handling.
+#	- demonstrates negative index material
 #	- raytracer initialization and configuration
 #	- postprocessing and plotting the results
 
@@ -75,7 +76,7 @@ m2.setMaterial(mat_type="refractive",IOR=3.0)
 meshes.append(m2)
 
 m2 = oe.cube(center=(20,0,20,0),size=[30,30,5,0])
-m2.setMaterial(mat_type="refractive",IOR=1.0)
+m2.setMaterial(mat_type="refractive",IOR=-2.0)
 meshes.append(m2)
 
 

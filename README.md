@@ -19,16 +19,19 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 	* Calculations can be efficiently run on CPUs or GPUs.
 	* 1,000,000 rays to accurately sample a scene. Not a problem!
 	* 100,000 polygons on top of that. Easy! 
-* Results can be stored in a Python pickle for further evaluation at a later time.
-* DXF output of traced and untraced scenes.
-* LightPyCL supports positive index materials, mirrors, termination surfaces and measurement surfaces.
+* LightPyCL supports positive and negative index materials, mirrors, termination surfaces and measurement surfaces.
 * Any material can be applied to any mesh. This means you can 
 	* measure the spatial distribution of light on any kind of surface geometry.
 	* terminate rays anywhere in the scene on an arbitrary shape.
 	* reflect and refract light from/into an arbitrarily shaped object.
+* Nested meshes and material-material transitions without an environment pass.
+	* Allows for the simulation of compound materials with n2 inside another with n1.
+	* Prevents unrealistic reflection coefficients for n1->n2 transitions like for glass to water.
 * Unpolarized rays are propagated in a physically correct fashion.
 * Power transmission and directivity analysis for unpolarized light.
 * Basic mesh transformations on optical elements.
+* Results can be stored in a Python pickle for further evaluation at a later time.
+* DXF output of traced and untraced scenes.
 * Leveraging of scene symmetries to simulate many light sources from results of one.
 * Generate optical elements directly from Python either by revolving a 2D curve or parametrically generating a mesh.
 
