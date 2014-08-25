@@ -68,11 +68,15 @@ ior_env = np.float32(1.0)
 meshes = [] #[measureSurf]
 
 m2 = oe.cube(center=(0,0,20,0),size=[100,100,10,0])
-m2.setMaterial(mat_type="refractive",IOR=2.0)
+m2.setMaterial(mat_type="refractive",IOR=1.5)
 meshes.append(m2)
 
-m2 = oe.cube(center=(-20,0,22.5,0),size=[30,30,5,0])
-m2.setMaterial(mat_type="refractive",IOR=3.0)
+m2 = oe.cube(center=(-20,0,22.5*(1.0-1e-6),0),size=[30,30,5,0]) #float32 permits only 7 digits => to make unambiguous intersection move mesh down 6 orders of magnitude less than to center position.
+m2.setMaterial(mat_type="refractive",IOR=-2.0)
+meshes.append(m2)
+
+m2 = oe.cube(center=(-20,0,27.5*(1.0+1e-6),0),size=[30,30,5,0])
+m2.setMaterial(mat_type="refractive",IOR=-2.0)
 meshes.append(m2)
 
 m2 = oe.cube(center=(20,0,20,0),size=[30,30,5,0])

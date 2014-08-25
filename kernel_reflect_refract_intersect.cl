@@ -53,7 +53,7 @@ int intersect_triangle(float3 O, float3 D,
 {
 	float3 E1, E2, T, P, Q;
 	float DEN, iDEN;
-	const float EPSILON = 0.000001;
+	const float EPSILON_NUM = 0.000001; 
 	
 	// ray from orig in direction dir
 	// ray line: R(t) = orig + t*dir
@@ -76,7 +76,7 @@ int intersect_triangle(float3 O, float3 D,
 	DEN  = dot(P, E1);
 	
 	// DEN = 0 means that ray is parallel to triangle
-	if (DEN > -EPSILON && DEN < EPSILON)
+	if (DEN > -EPSILON_NUM && DEN < EPSILON_NUM)
 		return 0;
 	
 	iDEN = 1.0 / DEN;
@@ -109,7 +109,8 @@ __kernel void intersect_postproc( __global const float3 *rays_origin, __global c
 		__global int *isects_count, __global int *ray_isect_mesh_idx_tmp, int mesh_count, int ray_count, float max_ray_len)                     
 {
 	//process results to calculate rays_dest and ray_entering
-	const float EPSILON 	= 0.000001;
+	const float EPSILON 	= 0.000001*max_ray_len; // EPSILON is used as a smallest possible length scale for error margins. for float32 this is ~7 digits.
+					    // Therefore EPSILON should depnd on the current length scale of the scene. here max_ray_len is a good measure.
 	int rid = get_global_id(0);	//ray index for parallel postprocessing
 	float t_tmp = max_ray_len; 	//buffer for isect_min_ray_len
 	int isect_mesh_id_tmp = -1;	//id of closest intersection
@@ -177,15 +178,15 @@ __kernel void intersect_postproc( __global const float3 *rays_origin, __global c
 				
 		// figure out which mesh id the ray is goint to propagate in next. we only need to do this if an intersection was found which is why we are in the if(isect_mesh_id_tmp>=0) case.
 		// for this we need to separate 2 regions. 
-		// 1. intersects that happen within the interval [t_min,t_min+100*EPSILON]. in this region only the final intersect counts.
+		// 1. intersects that happen within the interval [t_min,t_min+EPSILON]. in this region only the final intersect counts.
 		// 	LightPyCL currently does not consider interference effects. maybe in a later release.
 		//	if the final intersect is entering, we have our n2 mesh.
 		//	if the final intersect is exiting, we need to find the next mesh intersects outside of the defined interval which is handled by case 2.
-		// 2. find the closest intersect within interval [t_min+100*EPSILON,max_ray_len] that is exiting. that mesh determines n2. if none exists, then n2=IOR_env.
+		// 2. find the closest intersect within interval [t_min+EPSILON,max_ray_len] that is exiting. that mesh determines n2. if none exists, then n2=IOR_env.
 		// NOTE: we must disregard all materials but refractive/dissipative for this to work. thus mesh_mat_type==0 must hold
 		float t_minmin = t_min;
-		float t_maxmin = t_min; //max ray len in interval [t_minmin,t_minmin+100*EPSILON]
-		float t_minmax = max_ray_len; //ray length of closest exiting intersection in interval [t_min+100*EPSILON,max_ray_len]
+		float t_maxmin = t_min; //max ray len in interval [t_minmin,t_minmin+EPSILON]
+		float t_minmax = max_ray_len; //ray length of closest exiting intersection in interval [t_min+EPSILON,max_ray_len]
 		int   maxmin_entering = 0;
 		int   maxmin_idx = -1;
 		int   minmax_idx = -1;
@@ -197,15 +198,15 @@ __kernel void intersect_postproc( __global const float3 *rays_origin, __global c
 				entering = 1-(isects_count[mesh_count*rid+j] % 2);
 
 			
-				//find largest intersection in [t_minmin,t_minmin+100*EPSILON]
-				if(t_tmp<=t_minmin+100.0*EPSILON && t_tmp >= t_maxmin){
+				//find largest intersection in [t_minmin,t_minmin+EPSILON]
+				if(t_tmp<=t_minmin+EPSILON && t_tmp >= t_maxmin){
 					t_maxmin = t_tmp;
 					maxmin_idx = j;
 					maxmin_entering = entering;
 				}
 			
-				//find smallest exiting intersection in interal [t_min+100*EPSILON,max_ray_len]
-				if(t_tmp>t_minmin+100.0*EPSILON && entering == 0 && t_tmp <= t_minmax){
+				//find smallest exiting intersection in interal [t_min+EPSILON,max_ray_len]
+				if(t_tmp>t_minmin+EPSILON && entering == 0 && t_tmp <= t_minmax){
 					t_minmax = t_tmp;
 					minmax_idx = j;
 				}
@@ -241,7 +242,8 @@ __kernel void intersect_postproc( __global const float3 *rays_origin, __global c
 //intersect rays in parallel
 __kernel void intersect( __global const float3 *rays_origin, __global const float3 *rays_dir, __global float3 *rays_dest, __global int *ray_entering, __global int *ray_isect_mesh_id, __global int *ray_isect_mesh_idx, __global const float3 *mesh_v0, __global const float3 *mesh_v1, __global const float3 *mesh_v2, __global const int *mesh_id, __global float *isect_min_ray_len, __global int *isects_count, __global int *ray_isect_mesh_idx_tmp, int mesh_count, int tri_count, int ray_count, float max_ray_len)                     
 {                                                                            	
-	const float EPSILON 	= 0.000001;
+	const float EPSILON 	= 0.000001*max_ray_len; // EPSILON is used as a smallest possible length scale for error margins. for float32 this is ~7 digits.
+					    // Therefore EPSILON should depnd on the current length scale of the scene. here max_ray_len is a good measure.
 	int rid 		= get_global_id(0); //ray index
 	float3 ray_origin 	= rays_origin[rid];
 	float3 ray_dir 		= rays_dir[rid];
@@ -272,7 +274,7 @@ __kernel void intersect( __global const float3 *rays_origin, __global const floa
 					&t, &u, &v);
 					
 		//if intersect is found check if it is the one with shortest distance to ray origin and update isect_min_ray_len and isects_count of according mesh_id.
-		if(isect && t > 100.0*EPSILON){ //make sure that you do not re-intersect the surface you are emitting from  => 100*epsilon
+		if(isect && t > EPSILON){ 
 			if(t < isect_min_ray_len_tmp){
 				isect_min_ray_len_tmp = t;
 				ray_isect_mesh_idx_ltmp = i;
@@ -352,7 +354,9 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_origin, __glo
 		__global const float3 *mesh_v0, __global const float3 *mesh_v1, __global const float3 *mesh_v2, 
 		__global const int *mesh_id, __global const int *mesh_mat_type, __global const float *mesh_ior,
 		__global const float *mesh_refl, __global const float *mesh_diss, float IOR_env, int mesh_count, int ray_count, float max_ray_len)                     
-{	const float EPSILON 	= 0.000001;	
+{	const float EPSILON 	= 0.000001*max_ray_len; // EPSILON is used as a smallest possible length scale for length error margins. for float32 this is ~7 digits.
+					    // Therefore EPSILON should depnd on the current length scale of the scene. here max_ray_len is a good measure.
+	const float EPSILON_NUM	= 0.000001; // EPSILON_NUM not for length comparisons can be much smaller because here values close to 0 are of interest.
 	int rid = get_global_id(0);
 	int rmid = ray_isect_mesh_id[rid];
 	
@@ -382,7 +386,7 @@ __kernel void reflect_refract_rays( __global const float3 *in_rays_origin, __glo
 	{	IOR_in_ray = mesh_ior[r_orig_mid];
 		
 		//if material in which input ray was dissipative then modify inray power
-		if(mesh_mat_type[r_orig_mid] == 0 && mesh_diss[r_orig_mid] > EPSILON)
+		if(mesh_mat_type[r_orig_mid] == 0 && mesh_diss[r_orig_mid] > EPSILON_NUM)
 		{	float ray_len = length(in_ray_dest - in_rays_origin[rid]);
 			in_ray_pow = in_ray_pow * exp(-mesh_diss[r_orig_mid]*ray_len);
 			in_rays_power[rid] = in_ray_pow;
