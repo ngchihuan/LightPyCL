@@ -171,9 +171,20 @@ class CL_Tracer():
 		sFloat  = 4
 		sFloat3 = sFloat * 4
 		sInt    = 4
+		
 		global_mem_size = self.device.global_mem_size
-		space_req_per_ray = sFloat3 * 7 + sFloat * 3 + sInt * 3 + sFloat * 3 + sFloat * mesh_count + 2 * sInt * mesh_count
-		space_req_meshes  = tri_count * (3 * sFloat3 + sInt + sFloat)
+		ray_var_sizes = {"r_orig":sFloat3, "r_dst":sFloat3, "r_dir":sFloat3, "r_pow":sFloat, "r_meas":sInt, "r_ent":sInt, #input ray
+				 "rr_orig":sFloat3, "rr_dir":sFloat3, "rt_pow":sFloat, "rt_meas":sInt,				  #reflected ray
+				 "rt_orig":sFloat3, "rt_dir":sFloat3, "rt_pow":sFloat, "rt_meas":sInt,				  #transmitted ray
+				 "r_prev_isect_mid":sInt, "r_isect_mid":sInt, "r_isect_midx":sInt, "r_n1_mid":sInt, "r_n2_mid":sInt, #intersection material bufs
+				 "isect_count":mesh_count*sInt, "isect_midx_hits":mesh_count*sInt, "isect_m_minRayLen":mesh_count*sFloat #intersect intermediate results before postprocessing 
+				 }	
+		mesh_var_sizes = {"v0":tri_count*sFloat3, "v1":tri_count*sFloat3, "v2":tri_count*sFloat3, "m_id":tri_count*sInt,	#vertex buffers
+				  "m_typ":mesh_count*sInt, "m_ior":mesh_count*sFloat, "m_refl":mesh_count*sFloat, "m_diss":mesh_count*sFloat	#material buffers
+				 }
+				 
+		space_req_per_ray = sum(ray_var_sizes.values())
+		space_req_meshes  = sum(mesh_var_sizes.values())
 
 		#estimated CL device memory overhead
 		global_mem_overhead_est = global_mem_size * 0.15
