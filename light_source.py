@@ -136,6 +136,39 @@ class light_source():
 		self.rays_dir = np.dot(self.rays_dir,Rx(elevation0))
 		self.rays_dir = np.dot(self.rays_dir,Rz(azimuth0)).astype(np.float32)
 
+	def random_collimated_rays(self, diameter=1.0):
+		self.rays_dest   = np.zeros((self.ray_count,4)).astype(np.float32)
+		
+		print "Setting up collimated rays in random pattern"
+		#direction determains the main pointing direction of the beam => phi0 and thita0
+		#use phi and thita for rotation matricies along x and z axis
+		#first x for thita and then z for phi
+		elevation0 = np.arccos(self.direction[2]/la.norm(self.direction))
+		azimuth0 = np.arctan2(self.direction[1],self.direction[0])
+
+		Rx = lambda x: np.matrix([[1,0,0,0],[0,np.cos(x),-np.sin(x),0],[0,np.sin(x),np.cos(x),0],[0,0,0,0]])
+		Ry = lambda x: np.matrix([[np.cos(x),0,np.sin(x),0],[0,1,0,0],[-np.sin(x),0,np.cos(x),0],[0,0,0,0]])
+		Rz = lambda x: np.matrix([[np.cos(x),-np.sin(x),0,0],[np.sin(x),np.cos(x),0,0],[0,0,1,0],[0,0,0,0]])
+		
+		x=(np.random.rand(self.ray_count,1)-0.5)*diameter
+		y=(np.random.rand(self.ray_count,1)-0.5)*diameter
+		z= np.zeros((self.ray_count,1))
+		a= np.zeros((self.ray_count,1))
+		
+		r_orig = np.concatenate((x,y,z,a),axis=1)
+		
+		self.rays_dir = np.zeros((self.ray_count,4)).astype(np.float32)
+		self.rays_dir[:,2] = 1.0 #point in z direction
+		
+		self.rays_power = np.ones(self.ray_count).astype(np.float32)
+		self.rays_power = self.rays_power * self.power/np.sum(self.rays_power)
+		  
+		self.rays_origin = np.dot(r_orig,Rx(elevation0))
+		self.rays_origin = np.array(np.dot(self.rays_origin,Rz(azimuth0)).astype(np.float32) + self.center).astype(np.float32)
+		
+		self.rays_dir = np.dot(self.rays_dir,Rx(elevation0))
+		self.rays_dir = np.array(np.dot(self.rays_dir,Rz(azimuth0))).astype(np.float32)
+
 		
 	def rotate_rays(self,axis="z",pivot=[0,0,0,0],ang=np.pi/2.0):
 		Rx = lambda x: np.matrix([[1,0,0,0],[0,np.cos(x),-np.sin(x),0],[0,np.sin(x),np.cos(x),0],[0,0,0,0]])

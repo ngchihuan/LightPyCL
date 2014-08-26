@@ -59,6 +59,7 @@ oe = goe.optical_elements()
 ior_env = np.float32(1.0)
 
 # SETUP RADII, IOR AND DISTANCES FOR EYE
+# data from: "Optics of the Human Eye" by W. N. Charman
 r_cornea = 5.0 #cornea opening radius
 r_lens   = 5.0 #lens opening radius
 

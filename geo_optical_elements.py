@@ -148,6 +148,36 @@ class optical_elements():
 		mesh = GeoObject(verts,triangles)
 		return mesh
 
+	def spherical_lens_nofoc(self, r1, r2, x1, x2, d, d2=None,sign1_arcsin=1.0,sign2_arcsin=1.0):
+		N=50
+		if d2==None:
+			d2=d
+		z1 = r1+x1  #circle center of anterior lens
+		z2 = r2+x2  #circle center of posterior cornea
+		dphi1=0.0
+		dphi2=0.0
+		if sign1_arcsin < 0:
+			dphi1 = np.pi/2.0
+		if sign2_arcsin < 0:
+			dphi2 = np.pi/2.0
+			
+		phi1=np.linspace(0.0,np.absolute(np.arcsin(d/r1))+dphi1,N)
+		phi2=np.linspace(np.absolute(np.arcsin(d2/r2))+dphi2,0.0,N)
+		xc_1 = z1-r1*np.cos(phi1)
+		yc_1 = r1*np.sin(phi1)
+		xc_2 = z2-r2*np.cos(phi2)
+		yc_2 = r2*np.sin(phi2)
+		xc = np.append(xc_1,xc_2)
+		yc = np.append(yc_1,yc_2)
+
+		curve2d = []
+		for (a,b) in zip(xc,yc):
+			curve2d.append([a,b])
+	
+		mesh = self.revolve_curve(curve2d,axis="x", ang=2.0*np.pi, ang_pts=72)
+		mesh.rotate(axis="y",angle=-np.pi/2.0,pivot = (0,0,0,0))
+		return mesh
+
 	def sphere(self,center,radius):
 		N=72
 		phi = np.linspace(0.0,2.0*np.pi,N)
