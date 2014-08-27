@@ -43,8 +43,9 @@ time1 = time()
 
 # Amount of rays to trace
 ray_count=10
-# Amount of iterations to run the tracer. defines the depth rays are followed to.
-iterations = 6
+# tracer termination conditions. if either is reached, the tracer will stop tracing and return all results colledted until that point.
+iterations = 16		#if this amount of iterations has been done, the tracer will stop.
+power_dissipated = 0.99 # if 99% (0.99) amount of power has left the scene or was terminated/measured, the tracer will stop
 
 
 # create one lightsource
@@ -93,7 +94,7 @@ tr = it.CL_Tracer(platform_name="NVIDIA",device_name="460") #INIT properly
 
 time1 = time()		
 # run the iterative tracer
-tr.iterative_tracer(light_source=ls,meshes=meshes,trace_iterations=iterations,max_ray_len=max_ray_len,ior_env=ior_env)
+tr.iterative_tracer(light_source=ls,meshes=meshes,trace_iterations=iterations,trace_until_dissipated=power_dissipated,max_ray_len=max_ray_len,ior_env=ior_env)
 
 time2 = time()
 sim_time = time2 - time1

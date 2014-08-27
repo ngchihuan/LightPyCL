@@ -27,6 +27,7 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 * Nested meshes and material-material transitions without an environment pass.
 	* Allows for the simulation of compound materials with n2 inside another with n1.
 	* Prevents unrealistic reflection coefficients for n1->n2 transitions like for glass to water.
+* Power dissipation or trace depth based termination conditions.
 * Unpolarized rays are propagated in a physically correct fashion.
 * Power transmission and directivity analysis for unpolarized light.
 * Basic mesh transformations on optical elements.
@@ -144,13 +145,15 @@ This tells the *tracer* to use an nVidia GTX770 card. Alternatively, if the trac
 Once initialized, the *tracer* can be run with the following command
 
 ```
-iterations  = 8
-max_ray_len = 1e3
-ior_env     = 1.0
-tracer.iterative_tracer(light_source=lightsources,meshes=scene,trace_iterations=iterations,max_ray_len=max_ray_len,ior_env=ior_env)
+iterations       = 16
+power_dissipated = 0.99
+max_ray_len      = 1e3
+ior_env          = 1.0
+tracer.iterative_tracer(light_source=lightsources,meshes=scene,trace_iterations=iterations,trace_until_dissipated=power_dissipated,max_ray_len=max_ray_len,ior_env=ior_env)
 ```
 
-*iterations* tells the raytracer to follow the rays to a depth of 8.
+*iterations* tells the raytracer to follow the rays to a depth of 16.
+*trace_until_dissipated = 0.99* causes the tracer to terminate and return all results if 99% of the light sources input power has dissipated or has left the scene. 
 *max_ray_len = 1e3* specifies the maximum length a ray can have if it does not intersect.
 *ior_env     = 1.0* determines the refractive index of the environment (1.0 for vacuum).
 
@@ -199,16 +202,15 @@ Please feel free to contribute your evaluation code or any other code/improvemen
 
 The files *example_directivity_lens.py*, *example_directivity_parabolic_mirror.py* and *example_directivity_sphericalMeasSurf.py* provided with LightPyCL are constructed just as described in the previous subsections of this *README* and are ready to run. To try out the tracer examples just run
 
+`python example_directivity_dissipative_cube.py`
 `python example_directivity_lens.py`,
-
 `python example_directivity_parabolic_mirror.py` 
-
+`python example_human_eye.py`
+`python example_nested_cubes_refraction.py`
 or
-
 `python example_directivity_sphericalMeasSurf.py` 
 
 in your favourite terminal emulator.
-
 
 ## Performance
 

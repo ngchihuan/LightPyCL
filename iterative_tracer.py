@@ -74,7 +74,7 @@ class CL_Tracer():
 		self.queue = cl.CommandQueue(self.context)
 	
 
-	def iterative_tracer(self,light_source,meshes,trace_iterations,max_ray_len,ior_env):
+	def iterative_tracer(self,light_source,meshes,trace_iterations=100,trace_until_dissipated=0.99,max_ray_len=np.float32(1e3),ior_env=np.float32(1.0)):
 		""" iterative_tracer takes the light_source and meshes objects and coverts them to cl_arrays.
 		    Thereafter it intersects and reflects and refracts all the rays from the light source(s).
 		    Intersection, reflection and refraction are repeated trace_iterations number of times.
@@ -112,6 +112,7 @@ class CL_Tracer():
 
 			k+=1
 
+		input_power		= sum(np.sort(rays_power))
 		rays_pow		= np.array(rays_power,dtype=np.float32) 
 		rays_meas		= np.zeros(ray_count).astype(np.int32)
 		rays_current_mid	= np.zeros(ray_count).astype(np.int32) - 2 #initial value -2 tell the tracer that the rays have been emitted and do not know in which (if any) mesh they are located
@@ -282,7 +283,7 @@ class CL_Tracer():
 				r_meas_buf		= cl_array.to_device(self.queue,rays_meas[minidx:maxidx])	#needs copy
 				r_prev_isect_m_id_buf   = cl_array.to_device(self.queue,rays_current_mid[minidx:maxidx])	#needs copy
 				#INTERSECT RAYS WITH SCENE
-				GIDs = (part_ray_count_this_iter,1) # max global ids set to number of input rays
+				GIDs = rays_meas[minidx:maxidx].shape #(part_ray_count_this_iter,1) # max global ids set to number of input rays
 				print "Starting intersect parallel ray kernel."
 				event = self.prg.intersect(self.queue, GIDs, None, r_origin_buf.data,
 					r_dir_buf.data,r_dest_buf.data,r_entering_buf.data,
@@ -352,7 +353,7 @@ class CL_Tracer():
 			# APPEND RESULTS OF THIS ITERATION TO OVERALL RESULTS 
 			print "Assembling results"
 			self.results.append((rays_origin,rays_dest,rays_pow,rays_meas))
-
+			
 			#print rays_origin
 			#print rays_dest
 			#print rays_meas
@@ -368,16 +369,26 @@ class CL_Tracer():
 			rays_pow    = np.append(rrays_pow,trays_pow,axis=0).astype(np.float32)[idx]
 			rays_meas   = np.append(rrays_meas,trays_meas,axis=0).astype(np.int32)[idx]
 
+			power_in_scene  = sum(np.sort(rays_pow))
 			rays_current_mid   = np.append(rays_current_mid,rays_current_mid,axis=0).astype(np.int32)[idx]
 			
 			ray_count   = np.int32(len(rays_origin))
 		
-			if ray_count == 0:
-				print "No rays left to trace. Terminating tracer."
-				break
 			time2 = time()
 			t_host_pproc = time2 -time1
 			print "Host side data pruning:        ", t_host_pproc, "s"
+			
+			
+			print "Power left in scene:           ", power_in_scene/input_power * 100.0
+			if power_in_scene < (1.0-trace_until_dissipated)*input_power:
+				print "****************************************************************"
+				print "Scene power is below", trace_until_dissipated*100.0, "% of input power. Terminating trace."
+				print "****************************************************************"
+				break
+		
+			if ray_count == 0:
+				print "No rays left to trace. Terminating tracer."
+				break
 				
 		return self.results
 	
