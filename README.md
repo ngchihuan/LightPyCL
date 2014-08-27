@@ -42,7 +42,7 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 * Leveraging of scene symmetries to simulate many light sources from results of one.
 * Generate optical elements directly from Python either by revolving a 2D curve or parametrically generating a mesh.
 
-## Missing features
+### Future features?
 
 * Ray count determination based on user desired result accuracy and resolution.
 * Tracing of polarized light.
