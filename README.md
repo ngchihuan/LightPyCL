@@ -52,7 +52,7 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 * DXF import of 2D and 3D objects.
 * A UI.
 
-Depending on necessity, some of these features will be implemented. Currently, however, there is no overpowering need for them. Especially not for a UI. So if you desire the one or the other feature, drop me a line. 
+Depending on necessity, some of these features will be implemented. Currently however, there is no overpowering need for them. Especially not for a UI. So if you desire the one or the other feature, drop me a line. 
 Or even better -- **Join the project!**
 
 ## Prerequisites
