@@ -19,7 +19,11 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 	* Calculations can be efficiently run on CPUs or GPUs.
 	* 1,000,000 rays to accurately sample a scene. Not a problem!
 	* 100,000 polygons on top of that. Easy! 
-* LightPyCL supports positive and negative index materials, mirrors, termination surfaces and measurement surfaces.
+* Materials:
+	* Real valued positive and negative index materials,
+	* mirrors,
+	* termination surfaces and
+	* measurement surfaces.
 * Any material can be applied to any mesh. This means you can 
 	* measure the spatial distribution of light on any kind of surface geometry.
 	* terminate rays anywhere in the scene on an arbitrary shape.
@@ -27,14 +31,29 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 * Nested meshes and material-material transitions without an environment pass.
 	* Allows for the simulation of compound materials with n2 inside another with n1.
 	* Prevents unrealistic reflection coefficients for n1->n2 transitions like for glass to water.
-* Power dissipation or trace depth based termination conditions.
-* Unpolarized rays are propagated in a physically correct fashion.
+* Trace convergence and completion conditions:
+	* Power dissipation and
+	* trace depth.
+* Physically correct propagation of unpolarized rays.
 * Power transmission and directivity analysis for unpolarized light.
 * Basic mesh transformations on optical elements.
 * Results can be stored in a Python pickle for further evaluation at a later time.
 * DXF output of traced and untraced scenes.
 * Leveraging of scene symmetries to simulate many light sources from results of one.
 * Generate optical elements directly from Python either by revolving a 2D curve or parametrically generating a mesh.
+
+## Missing features
+
+* Ray count determination based on user desired result accuracy and resolution.
+* Tracing of polarized light.
+* Anisotropic media.
+* Surface coatings.
+* Coherent sources and interference effects.
+* DXF import of 2D and 3D objects.
+* A UI.
+
+Depending on necessity, some of these features will be implemented. Currently, however, there is no overpowering need for them. Especially not for a UI. So if you desire the one or the other feature, drop me a line. 
+Or even better -- **Join the project!**
 
 ## Prerequisites
 
@@ -200,15 +219,9 @@ Please feel free to contribute your evaluation code or any other code/improvemen
 
 ### Putting it all together
 
-The files *example_directivity_lens.py*, *example_directivity_parabolic_mirror.py* and *example_directivity_sphericalMeasSurf.py* provided with LightPyCL are constructed just as described in the previous subsections of this *README* and are ready to run. To try out the tracer examples just run
+The files *example_directivity_dissipative_cube.py*, *example_directivity_lens.py*, *example_directivity_parabolic_mirror.py*, *python example_human_eye.py*, *python example_nested_cubes_refraction.py* and *example_directivity_sphericalMeasSurf.py* provided with LightPyCL are constructed just as described in the previous subsections of this *README* and are ready to run. To try out the tracer examples just run an example file as follows
 
-`python example_directivity_dissipative_cube.py`
-`python example_directivity_lens.py`,
-`python example_directivity_parabolic_mirror.py` 
 `python example_human_eye.py`
-`python example_nested_cubes_refraction.py`
-or
-`python example_directivity_sphericalMeasSurf.py` 
 
 in your favourite terminal emulator.
 
