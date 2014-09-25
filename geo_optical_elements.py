@@ -20,11 +20,12 @@
 
 import numpy as np
 from dxfwrite import DXFEngine as dxf
+import triangle
 
 class GeoObject():
 	""" GeoObject provides structure to store meshes and perform simple geomentric operations such as translate and rotate.
 	This cass also privides conversion methods required by the tracer kernel and dxf output."""
-	verticies=None
+	vertices=None
 	triangles=None
 	IOR = 1.0
 	reflectivity = 1.0
@@ -38,7 +39,7 @@ class GeoObject():
 	
 
 	def __init__(self,verts,tris, mat_type="refractive", IOR=1.0, reflectivity = 1.0, dissipation = 0.0, AR_IOR=1.0, AR_thickness=0.0, anisotropy = None):
-		self.verticies = verts
+		self.vertices = verts
 		self.triangles = tris
 		self.setMaterial(mat_type,IOR, reflectivity, dissipation, AR_IOR, AR_thickness, anisotropy)
 	
@@ -65,7 +66,7 @@ class GeoObject():
 		return {"type":self.matTypes.get(self.matType), "IOR":self.IOR, "R":self.reflectivity, "dissipation":self.dissipation}
 	
 	def translate(self,vec):
-		self.verticies = self.verticies + np.array(vec)
+		self.vertices = self.vertices + np.array(vec)
 	
 	
 	def rotate(self,axis="x",angle=np.pi/2,pivot = (0,0,0,0)):
@@ -81,26 +82,42 @@ class GeoObject():
 		else:
 			R=Rx
 		
-		#print self.verticies.dtype
-		vtmp = list(np.transpose(R(angle) * np.transpose(np.array(self.verticies) - np.array(pivot))) + np.array(pivot))
+		#print self.vertices.dtype
+		vtmp = list(np.transpose(R(angle) * np.transpose(np.array(self.vertices) - np.array(pivot))) + np.array(pivot))
 		
 		i=0
 		for vert_ in vtmp:
 			vert = np.array(vert_)
-			self.verticies[i] = np.array([vert[0][0],vert[0][1],vert[0][2],0],dtype=np.float32)
-			#print self.verticies[i]
+			self.vertices[i] = np.array([vert[0][0],vert[0][1],vert[0][2],0],dtype=np.float32)
+			#print self.vertices[i]
 			i+=1
 
 	def trimesh(self):
-		""" returns a list tmesh of triangles that themselves are composed of a list of three verticies."""
+		""" returns a list tmesh of triangles that themselves are composed of a list of three vertices."""
 		tmesh = []
 		for tri in self.triangles:
 			tri_verts = []
 			for idx in tri:
-				tri_verts.append(self.verticies[idx])
+				tri_verts.append(self.vertices[idx])
 			tmesh.append(tri_verts)
 		return tmesh
-	
+		
+	def trimesh_to_geoObject(self,trimesh):
+		""" converts a list of triangles into a geo_object. function is still primitive and heavily duplicates points."""
+		verts = []
+		tris  = []
+		k=0
+		for tri in trimesh:
+			this_tri = []
+			for v in tri:
+				verts.append(v)
+				this_tri.append(k)
+				k+=1
+			tris.append(this_tri)
+			
+		self.vertices = verts
+		self.triangles = tris
+		
 	def tribuf(self):
 		""" 	generate 3 buffers for PyOpenCL tracer code
 			each buffer contains one vertex of a triangle.
@@ -109,26 +126,30 @@ class GeoObject():
 		m_v1 = []
 		m_v2 = []
 		for tri in self.triangles:
-			m_v0.append(self.verticies[tri[0]])
-			m_v1.append(self.verticies[tri[1]])
-			m_v2.append(self.verticies[tri[2]])
+			m_v0.append(self.vertices[tri[0]])
+			m_v1.append(self.vertices[tri[1]])
+			m_v2.append(self.vertices[tri[2]])
 		return (m_v0,m_v1,m_v2)	
 	
+	def append(self,verts,tris):
+		""" 	append mesh data to existing GeoObject by appending vertices to self.vertices and index correcting triangle indices."""
+		self.triangles = np.append(self.triangles,np.array(tris).astype(np.int32)+len(self.vertices),axis=0)
+		self.vertices  = np.append(self.vertices,verts,axis=0)
+			
 	def write_dxf(self,dxf_file):
 		""" writes geometry to a file by using the dxfwrite libs."""
 		drawing = dxf.drawing(dxf_file)
 		drawing.add_layer('0', color=2)
 		for tri in self.triangles:
-			drawing.add(dxf.face3d([self.verticies[tri[0]][0:3], 
-						self.verticies[tri[1]][0:3], 
-						self.verticies[tri[2]][0:3]], layer="0"))
+			drawing.add(dxf.face3d([self.vertices[tri[0]][0:3], 
+						self.vertices[tri[1]][0:3], 
+						self.vertices[tri[2]][0:3]], layer="0"))
 		#drawing.add(dxf.text('Test', insert=(0, 0.2), layer='TEXTLAYER'))
 		drawing.save()	
-
 		
 class optical_elements():
 	""" The optical_elements class provides generator methods that create mesh objects from basic parametrs of the corresponding optical elements.
-	optical element generators return a GeoObject with verticies triangle indicies and index of refraction properties."""
+	optical element generators return a GeoObject with vertices triangle indicies and index of refraction properties."""
 	def cube(self, center, size):
 		verts = np.array(	[[-1,-1,-1,0],
 					 [ 1,-1,-1,0],
@@ -280,6 +301,68 @@ class optical_elements():
 				
 		return GeoObject(verts,tris)
 			
+	def extrude_by_vector(self,curve,vector,capped=True):
+		# create extrusion surface with open ends
+		# curve		list of (x,y) tuples
+		# vector	direction and length in which to extrde
+
+		verts = []
+		tris  = []
+		z0 = 0.0
+
+		# create mesh from extrusion of curve
+		k=0
+		for xy in curve:
+			v0 = np.array([xy[0],xy[1],z0,0],dtype=np.float32)
+			v1 = np.array([xy[0]+vector[0],xy[1]+vector[1],z0+vector[2],0],dtype=np.float32)
+			verts.append(v0)
+			verts.append(v1)
+			
+			if k<len(curve)-1:
+				i0=[2*k+0,2*k+1,2*k+2]
+				i1=[2*k+2,2*k+3,2*k+1]
+				tris.append(i0)
+				tris.append(i1)
+			k+=1
+		gobj = GeoObject(verts,tris)
+		
+		# create extrusion caps to close the surface
+		if capped:
+			#print curve
+			trisurf = self.curve_to_mesh(curve)
+			cap_2d = trisurf.vertices
+			gobj.append(cap_2d,trisurf.triangles)
+			gobj.append(cap_2d + vector,trisurf.triangles)
+				
+				
+		return gobj
+
+	def curve_to_mesh(self,curve):
+		M=len(curve)
+		segs = np.zeros((M,2)).astype(np.int32)
+		segs[:,0] = np.linspace(0,M-1,M).astype(np.int32)
+		segs[:,1] = segs[:,0]+1
+		segs[-1,-1] = 0
+		
+		face={"vertices": np.array(curve).astype(np.float32),"segments": np.array(segs).astype(np.int32)}
+		
+		tri = triangle.triangulate(face,'pq10')
+		
+		verts_2d     = tri["vertices"]
+		trinagles_2d = tri["triangles"]
+		
+		verts     = np.zeros((len(verts_2d),4),dtype=np.float32)
+		trinagles = np.zeros((len(trinagles_2d),3),dtype=np.float32)
+		
+		
+		verts[:,0]     = verts_2d[:,0]
+		trinagles[:,0] = trinagles_2d[:,0]
+		verts[:,1]     = verts_2d[:,1]
+		trinagles[:,1] = trinagles_2d[:,1]
+		trinagles[:,2] = trinagles_2d[:,2]
+		
+		return GeoObject(verts=verts,tris=trinagles)
+
 	def lens_spherical_biconcave(self,focus,r1,r2,diameter,IOR):
 		curve2d = self.lens_spherical_2r(focus,r1,r2,diameter,1,IOR)
 		mesh = self.revolve_curve(curve2d, axis="x", ang=np.pi, ang_pts=36)

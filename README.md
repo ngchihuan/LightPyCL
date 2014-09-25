@@ -46,7 +46,9 @@ LightPyCL is released under the GPLv3 and is free software released in hope that
 
 * Ray count determination based on user desired result accuracy and resolution.
 * Tracing of polarized light.
+* Polarizing and depolarizing media.
 * Anisotropic media.
+* Polarising Torrance-Sparrow microfacets.
 * Surface coatings.
 * Coherent sources and interference effects.
 * DXF import of 2D and 3D objects.
