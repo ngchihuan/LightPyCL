@@ -110,7 +110,7 @@ class light_source():
 			else:
 				azimuth0 = -np.pi/2.0
 		else:
-			azimuth0 = np.arctan(self.direction[1]/self.direction[0])
+			azimuth0 = np.arctan2(self.direction[1],self.direction[0])
 
 		Rx = lambda x: np.matrix([[1,0,0,0],[0,np.cos(x),-np.sin(x),0],[0,np.sin(x),np.cos(x),0],[0,0,0,0]])
 		Ry = lambda x: np.matrix([[np.cos(x),0,np.sin(x),0],[0,1,0,0],[-np.sin(x),0,np.cos(x),0],[0,0,0,0]])
